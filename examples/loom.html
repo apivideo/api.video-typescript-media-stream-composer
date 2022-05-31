@@ -1,0 +1,105 @@
+<html>
+
+<head>
+    <script src="../dist/index.js"></script>
+    <style>
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #video {
+            border: 1px solid gray;
+        }
+
+        #container div {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div>
+            <video muted id="video"></video>
+        </div>
+        <div>
+            <button id="start">start recording</button>
+            <button id="stop" disabled>stop recording</button>
+        </div>
+        <div>
+            <p>Video link: <span id="video-link"><i>will be displayed when the recording is finished</i></span></p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.querySelector('#video');
+        const startButton = document.getElementById("start");
+        const stopButton = document.getElementById("stop");
+        const videoLink = document.getElementById("video-link");
+        const width = 1366;
+        const height = 768;
+
+        video.style.width = `${width}px`;
+        video.style.height = `${height}px`;
+
+
+        (async () => {
+            const screencast = await navigator.mediaDevices.getDisplayMedia();
+            const webcam = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: true
+            });
+
+            // create the media stream merger instance
+            const mediaStreamMerger = new MediaStreamMerger({
+                resolution: {
+                    width,
+                    height
+                }
+            });
+
+            // add the screencast stream
+            mediaStreamMerger.addStream(screencast, {
+                position: "contain",
+                verticalAlign: "center",
+                horizontalAlign: "center",
+                mute: true,
+            });
+
+            // add the webcam stream in the lower left corner, with a circle mask
+            mediaStreamMerger.addStream(webcam, {
+                position: "fixed",
+                mute: false,
+                top: "70%",
+                left: 0,
+                height: "30%",
+                mask: "circle",
+            });
+
+            // display the merged stream in the video element (preview purpose)
+            video.srcObject = mediaStreamMerger.result;
+            video.play();
+
+            // when the start button is clicked, start the recording
+            startButton.onclick = () => {
+                mediaStreamMerger.startRecording({
+                    uploadToken: "YOUR_UPLOAD_TOKEN",
+                });
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            }
+
+            // when the stop button is clicked, stop the recording and display the video link
+            stopButton.onclick = () => {
+                mediaStreamMerger.stopRecording().then(a => videoLink.innerHTML = a.assets.player);
+                stopButton.disabled = true;
+                startButton.disabled = false;
+            }
+
+        })();
+    </script>
+</body>
+
+</html>
