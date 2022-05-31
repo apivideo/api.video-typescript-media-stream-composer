@@ -3,6 +3,9 @@
 <head>
     <script src="../dist/index.js"></script>
     <style>
+        body {
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
         #container {
             display: flex;
             flex-direction: column;
@@ -21,12 +24,17 @@
 
 <body>
     <div id="container">
-        <div>
-            <video muted id="video"></video>
-        </div>
+        <div id="canvas-container"> </div>
         <div>
             <button id="start">start recording</button>
             <button id="stop" disabled>stop recording</button>
+        </div>
+        <div>
+            <label for="">Tool:</label>
+            <select id="tool-select">
+                <option value="draw">draw</option>
+                <option selected value="move-resize">move/resize</option>
+            </select>
         </div>
         <div>
             <p>Video link: <span id="video-link"><i>will be displayed when the recording is finished</i></span></p>
@@ -34,15 +42,17 @@
     </div>
 
     <script>
-        const video = document.querySelector('#video');
+        const canvasContainer = document.getElementById('canvas-container');
+        const toolSelect = document.getElementById("tool-select");
         const startButton = document.getElementById("start");
         const stopButton = document.getElementById("stop");
         const videoLink = document.getElementById("video-link");
         const width = 1366;
         const height = 768;
 
-        video.style.width = `${width}px`;
-        video.style.height = `${height}px`;
+        canvasContainer.style.width = `${width}px`;
+        canvasContainer.style.height = `${height}px`;
+
 
 
         (async () => {
@@ -52,8 +62,8 @@
                 video: true
             });
 
-            // create the media stream merger instance
-            const mediaStreamMerger = new MediaStreamMerger({
+            // create the media stream composer instance
+            const mediaStreamComposer = new MediaStreamComposer({
                 resolution: {
                     width,
                     height
@@ -61,31 +71,30 @@
             });
 
             // add the screencast stream
-            mediaStreamMerger.addStream(screencast, {
+            mediaStreamComposer.addStream(screencast, {
                 position: "contain",
-                verticalAlign: "center",
-                horizontalAlign: "center",
                 mute: true,
             });
 
             // add the webcam stream in the lower left corner, with a circle mask
-            mediaStreamMerger.addStream(webcam, {
+            mediaStreamComposer.addStream(webcam, {
                 position: "fixed",
                 mute: false,
-                top: "70%",
+                y: height - 200,
                 left: 0,
-                height: "30%",
+                height: 200,
                 mask: "circle",
+                draggable: true,
+                resizable: true,
             });
 
-            // display the merged stream in the video element (preview purpose)
-            video.srcObject = mediaStreamMerger.result;
-            video.play();
+            // display the canvas (preview purpose)
+            mediaStreamComposer.appendCanvasTo("#canvas-container");
 
             // when the start button is clicked, start the recording
             startButton.onclick = () => {
-                mediaStreamMerger.startRecording({
-                    uploadToken: "YOUR_UPLOAD_TOKEN",
+                mediaStreamComposer.startRecording({
+                    uploadToken: "to7MfQoJy5t35HRYpJuLTrZD",
                 });
                 startButton.disabled = true;
                 stopButton.disabled = false;
@@ -93,11 +102,18 @@
 
             // when the stop button is clicked, stop the recording and display the video link
             stopButton.onclick = () => {
-                mediaStreamMerger.stopRecording().then(a => videoLink.innerHTML = a.assets.player);
+                mediaStreamComposer.stopRecording().then(a => videoLink.innerHTML = a.assets.player);
                 stopButton.disabled = true;
                 startButton.disabled = false;
             }
 
+            mediaStreamComposer.setDrawingSettings({
+                color: "#FF0000",
+                lineWidth: 5,
+                autoEraseDelay: 3,
+            });
+
+            toolSelect.onchange = (a) => mediaStreamComposer.setMouseTool(a.target.value);
         })();
     </script>
 </body>

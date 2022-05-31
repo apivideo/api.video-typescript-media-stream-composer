@@ -1,6 +1,6 @@
 {
   "name": "@api.video/media-stream-composer",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "api.video media stream composer",
   "repository": {
     "type": "git",

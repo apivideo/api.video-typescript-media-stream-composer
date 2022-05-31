@@ -1,44 +1,90 @@
 import { ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadResponse } from "@api.video/media-recorder";
-import { AudioEffect, DrawFunction } from "video-stream-merger";
 export interface Options {
-    resolution?: {
-        width: number;
-        height: number;
-    };
+    resolution: Resolution;
 }
-export interface AddStreamOptions {
+export interface StreamOptions {
+    name?: string;
     position?: "contain" | "cover" | "fixed";
-    top: number | string;
-    bottom: number | string;
-    left: number | string;
-    right: number | string;
-    horizontalAlign: "left" | "center" | "right";
-    verticalAlign: "top" | "center" | "bottom";
-    width: number | string;
-    height: number | string;
-    mask?: "none" | "circle" | "rectangle";
-    index: number;
-    mute: boolean;
-    muted: boolean;
-    draw: DrawFunction;
-    audioEffect: AudioEffect;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    draggable?: boolean;
+    resizable?: boolean;
+    mask?: Mask;
+    index?: number;
+    mute?: boolean;
+    onClick?: (streamId: string, event: {
+        x: number;
+        y: number;
+    }) => void;
 }
-export declare class MediaStreamMerger {
+declare type Mask = "none" | "circle";
+interface StreamDisplaySettings {
+    displayResolution: Resolution;
+    streamResolution: Resolution;
+    position: Position;
+    radius?: number;
+    index: number;
+}
+interface Resolution {
+    height: number;
+    width: number;
+}
+interface Position {
+    x: number;
+    y: number;
+}
+export interface StreamDetails {
+    id: string;
+    options: StreamOptions;
+    displaySettings: StreamDisplaySettings;
+    stream: MediaStream;
+}
+interface DrawingSettings {
+    color: string;
+    lineWidth: number;
+    autoEraseDelay: number;
+}
+declare type MouseTool = "draw" | "move-resize";
+declare type RecordingOptions = ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken;
+export declare class MediaStreamComposer {
     private options;
     private merger?;
     result: MediaStream | null;
-    private resolution;
     private recorder?;
+    private canvas?;
     private streams;
-    constructor(options: Options);
-    startRecording(options: ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken): void;
+    private mouseTool;
+    private isDrawing;
+    private drawingSettings;
+    private drawings;
+    constructor(options: Partial<Options>);
+    startRecording(options: RecordingOptions): void;
     stopRecording(): Promise<VideoUploadResponse>;
-    updateStream(streamId: number, opts: AddStreamOptions): void;
-    addStream(mediaStream: MediaStream, options: AddStreamOptions): number;
-    private calcPosition;
+    updateStream(streamId: string, options: StreamOptions): void;
+    appendCanvasTo(containerQuerySelector: string): void;
+    removeStream(id: string): void;
+    addStream(mediaStream: MediaStream, options: StreamOptions): string;
+    getCanvas(): HTMLCanvasElement | undefined;
+    getStreams(): StreamDetails[];
+    getStream(id: string): StreamDetails;
+    moveUp(streamId: string): void;
+    moveDown(streamId: string): void;
+    setMouseTool(tool: MouseTool): void;
+    setDrawingSettings(settings: Partial<DrawingSettings>): void;
+    clearDrawing(): void;
+    private updateIndex;
+    private drawStream;
+    private validateOptions;
+    private cleanIndexes;
     private calculateCoverDimensions;
     private calculateContainDimensions;
     private calculateFixedDimensions;
     private buildStreamDisplaySettings;
-    private getMerger;
+    private onMouseMove;
+    private onMouseDrag;
+    private createDrawingStream;
+    private init;
 }
+export {};
