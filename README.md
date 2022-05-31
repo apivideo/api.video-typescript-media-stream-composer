@@ -214,7 +214,7 @@ Update the options of a stream that has been added to the composition.
 <html>
 
     <head>
-        <script src="../dist/index.js"></script>
+        <script src="https://unpkg.com/@api.video/media-stream-composer"></script>
         <style>
             #container {
                 display: flex;
