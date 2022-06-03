@@ -1,6 +1,6 @@
 [![badge](https://img.shields.io/twitter/follow/api_video?style=social)](https://twitter.com/intent/follow?screen_name=api_video) &nbsp; [![badge](https://img.shields.io/github/stars/apivideo/api.video-typescript-media-stream-composer?style=social)](https://github.com/apivideo/api.video-typescript-media-stream-composer) &nbsp; [![badge](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fcommunity.api.video)](https://community.api.video)
 ![](https://github.com/apivideo/API_OAS_file/blob/master/apivideo_banner.png)
-<h1 align="center">api.video media recorder</h1>
+<h1 align="center">api.video media composer</h1>
 
 ![npm](https://img.shields.io/npm/v/@api.video/media-stream-composer) ![ts](https://badgen.net/badge/-/TypeScript/blue?icon=typescript&label)
 
@@ -23,15 +23,27 @@
       - [Using an access token (discouraged):](#using-an-access-token-discouraged)
       - [Common options](#common-options)
   - [Methods](#methods)
-    - [`addStream(mediaStream: MediaStream, options: AddStreamOptions)`](#addstreammediastream-mediastream-options-addstreamoptions)
+    - [`addStream(mediaStream: MediaStream, options: StreamOptions): string`](#addstreammediastream-mediastream-options-streamoptions-string)
       - [Options](#options-1)
-    - [`updateStream(streamId: number, opts: AddStreamOptions)`](#updatestreamstreamid-number-opts-addstreamoptions)
+    - [`updateStream(streamId: string, options: StreamOptions): void`](#updatestreamstreamid-string-options-streamoptions-void)
+    - [`startRecording(options: ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken): void`](#startrecordingoptions-progressiveuploaderoptionswithuploadtoken--progressiveuploaderoptionswithaccesstoken-void)
+    - [`stopRecording(): Promise<VideoUploadResponse>`](#stoprecording-promisevideouploadresponse)
+    - [`appendCanvasTo(containerQuerySelector: string): void`](#appendcanvastocontainerqueryselector-string-void)
+    - [`removeStream(id: string): void`](#removestreamid-string-void)
+    - [`getCanvas(): HTMLCanvasElement | undefined`](#getcanvas-htmlcanvaselement--undefined)
+    - [`getStreams(): StreamDetails[]`](#getstreams-streamdetails)
+    - [`getStream(id: string): StreamDetails`](#getstreamid-string-streamdetails)
+    - [`moveUp(id: string): void`](#moveupid-string-void)
+    - [`moveDown(id: string): void`](#movedownid-string-void)
+    - [`setMouseTool(tool: MouseTool): void`](#setmousetooltool-mousetool-void)
+    - [`setDrawingSettings(settings: Partial<DrawingSettings>): void`](#setdrawingsettingssettings-partialdrawingsettings-void)
+    - [`clearDrawing(): void`](#cleardrawing-void)
 - [Full examples](#full-examples)
   - ["Loom-like": screencast + webcam in the corner](#loom-like-screencast--webcam-in-the-corner)
 
 # Project description
 
-Library to easily upload videos to api.video from a composition of several media streams. The position and size of each media stream can be set in a flexible and easy way. 
+This library lets you easily upload videos to api.video from a composition of several media streams. The position and size of each stream can be set in a flexible and easy way. 
 
 This allows for example, with only a few lines of code, to create a video composed of:
 "entire screen capture in the left half, window #1 capture in the right half, and the webcam in a circular shape in the bottom left of the video" 
@@ -54,7 +66,6 @@ You can then use the library in your script:
 var { ApiVideoMediaRecorder } = require('@api.video/media-stream-composer');
 
 var composer = new MediaStreamComposer(mediaStream, {
-    uploadToken: "YOUR_DELEGATED_TOKEN",
     resolution: {
         width: 1280,
         height: 720
@@ -76,7 +87,6 @@ You can then use the library in your script:
 import { ApiVideoMediaRecorder } from '@api.video/media-stream-composer'
 
 const composer = new MediaStreamComposer(mediaStream, {file: files[0],
-    uploadToken: "YOUR_DELEGATED_TOKEN"
     resolution: {
         width: 1280,
         height: 720
@@ -101,7 +111,6 @@ Then, once the `window.onload` event has been trigered, create your player using
 ...
 <script type="text/javascript"> 
     const composer = new MediaStreamComposer(mediaStream, {
-        uploadToken: "YOUR_DELEGATED_TOKEN"
         resolution: {
             width: 1280,
             height: 720
@@ -154,29 +163,26 @@ Using delegated upload tokens for authentication is best options when uploading 
 
 ## Methods
 
-### `addStream(mediaStream: MediaStream, options: AddStreamOptions)`
+### `addStream(mediaStream: MediaStream, options: StreamOptions): string`
 
-The addStream() method adds a stream to the composition. It takes a `MediaStream` and an `options` parameter.
+The addStream() method adds a stream to the composition. It takes a `MediaStream` and an `StreamOptions` parameter.
 
 #### Options
-|     Option name | Mandatory          | Type                              | Description                                          |
-| --------------: | ------------------ | --------------------------------- | ---------------------------------------------------- |
-|       timeslice | no (default: 5000) | number                            | The number of milliseconds to record into each Blob. |
-|        position |                    | "contain" \| "cover" \| "fixed"   | TODO                                                 |
-|             top |                    | number \| string                  | TODO                                                 |
-|          bottom |                    | number \| string                  | TODO                                                 |
-|            left |                    | number \| string                  | TODO                                                 |
-|           right |                    | number \| string                  | TODO                                                 |
-| horizontalAlign |                    | "left" \| "center" \| "right"     | TODO                                                 |
-|   verticalAlign |                    | "top" \| "center" \| "bottom"     | TODO                                                 |
-|           width |                    | number \| string                  | TODO                                                 |
-|          height |                    | number \| string                  | TODO                                                 |
-|           mask? |                    | "none" \| "circle" \| "rectangle" | TODO                                                 |
-|           index |                    | number                            | TODO                                                 |
-|            mute |                    | boolean                           | TODO                                                 |
-|           muted |                    | boolean                           | TODO                                                 |
-|            draw |                    | DrawFunction                      | TODO                                                 |
-|     audioEffect |                    | AudioEffect                       | TODO                                                 |
+| Option name | Mandatory | Type                                          | Description |
+| ----------: | --------- | --------------------------------------------- | ----------- |
+|        name |           | string                                        | TODO        |
+|    position |           | "contain"  \| "cover"     \| "fixed"          | TODO        |
+|           x |           | number                                        | TODO        |
+|           y |           | number                                        | TODO        |
+|       width |           | number                                        | TODO        |
+|      height |           | number                                        | TODO        |
+|   draggable |           | boolean                                       | TODO        |
+|   resizable |           | boolean                                       | TODO        |
+|        mask |           | "none" \| "circle"                            | TODO        |
+|       index |           | number                                        | TODO        |
+|        mute |           | boolean                                       | TODO        |
+|       muted |           | boolean                                       | TODO        |
+|     onClick |           | (streamId: string, event: MouseEvent) => void | TODO        |
 
 **Example**
 
@@ -184,26 +190,133 @@ The addStream() method adds a stream to the composition. It takes a `MediaStream
     const webcam = await navigator.mediaDevices.getUserMedia(constraints);
     const webcamStreamId = composer.addStream(webcam, {
         position: "fixed",
-        left: 0,
-        top: "70%",
-        height: "30%",
+        x: 0,
+        y: 0,
+        width: 100,
         mask: "circle",
     });
 ```
 
-### `updateStream(streamId: number, opts: AddStreamOptions)`
+### `updateStream(streamId: string, options: StreamOptions): void`
 
 Update the options of a stream that has been added to the composition.
 
 **Example**
 
 ```javascript
-    // ... mediaRecorder instanciation
-
     composer.updateStream(webcamStreamId, {
         position: "fixed",
     });
 ```
+
+### `startRecording(options: ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `stopRecording(): Promise<VideoUploadResponse>`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `appendCanvasTo(containerQuerySelector: string): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `removeStream(id: string): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `getCanvas(): HTMLCanvasElement | undefined`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `getStreams(): StreamDetails[]`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `getStream(id: string): StreamDetails`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `moveUp(id: string): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `moveDown(id: string): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `setMouseTool(tool: MouseTool): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `setDrawingSettings(settings: Partial<DrawingSettings>): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
+### `clearDrawing(): void`
+
+Todo
+
+**Example**
+```javascript
+
+```
+
 
 # Full examples 
 
@@ -266,7 +379,7 @@ Update the options of a stream that has been added to the composition.
                 });
 
                 // create the media stream merger instance
-                const mediaStreamMerger = new MediaStreamMerger({
+                const mediaStreamComposer = new MediaStreamComposer({
                     resolution: {
                         width,
                         height
@@ -274,7 +387,7 @@ Update the options of a stream that has been added to the composition.
                 });
 
                 // add the screencast stream
-                mediaStreamMerger.addStream(screencast, {
+                mediaStreamComposer.addStream(screencast, {
                     position: "contain",
                     verticalAlign: "center",
                     horizontalAlign: "center",
@@ -282,7 +395,7 @@ Update the options of a stream that has been added to the composition.
                 });
 
                 // add the webcam stream in the lower left corner, with a circle mask
-                mediaStreamMerger.addStream(webcam, {
+                mediaStreamComposer.addStream(webcam, {
                     position: "fixed",
                     mute: false,
                     top: "70%",
@@ -292,12 +405,12 @@ Update the options of a stream that has been added to the composition.
                 });
 
                 // display the merged stream in the video element (preview purpose)
-                video.srcObject = mediaStreamMerger.result;
+                video.srcObject = mediaStreamComposer.result;
                 video.play();
 
                 // when the start button is clicked, start the recording
                 startButton.onclick = () => {
-                    mediaStreamMerger.startRecording({
+                    mediaStreamComposer.startRecording({
                         uploadToken: "YOUR_UPLOAD_TOKEN",
                     });
                     startButton.disabled = true;
@@ -306,7 +419,7 @@ Update the options of a stream that has been added to the composition.
 
                 // when the stop button is clicked, stop the recording and display the video link
                 stopButton.onclick = () => {
-                    mediaStreamMerger.stopRecording().then(a => videoLink.innerHTML = a.assets.player);
+                    mediaStreamComposer.stopRecording().then(a => videoLink.innerHTML = a.assets.player);
                     stopButton.disabled = true;
                     startButton.disabled = false;
                 }
