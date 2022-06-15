@@ -128,7 +128,7 @@ Then, once the `window.onload` event has been trigered, instanciate the composer
 
 ### Options 
 
-The media stream composer is instanciated using and an `options` object. At the moment, it containts only one option: `resolution`. If provided, this option must contain a `width` and a `height` property. This resolution will be used to create the canvas element that will be used to draw the streams. It will also be used to set the resolution of the video when it is uploaded.
+The media stream composer is instanciated using an `options` object. At the moment, it contains only one option: `resolution`. If provided, this option must contain a `width` and a `height` property. This resolution will be used to create the canvas element that will be used to draw the streams. It will also be used to set the resolution of the video when it is uploaded.
 
 If the `resolution` option is not provided, the canvas will be created with this resolution: 1280x720.
 
