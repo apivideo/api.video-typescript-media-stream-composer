@@ -14,10 +14,10 @@
 - [Getting started](#getting-started)
   - [Installation](#installation)
     - [Installation method #1: requirejs](#installation-method-1-requirejs)
-    - [Installation method #2: typescript](#installation-method-2-typescript)
+    - [Installation method #2: ES6 modules](#installation-method-2-es6-modules)
     - [Simple include in a javascript project](#simple-include-in-a-javascript-project)
 - [Documentation](#documentation)
-  - [Instanciation](#instanciation)
+  - [Instantiation](#instantiation)
     - [Options](#options)
   - [Methods](#methods)
     - [`addStream(mediaStream: MediaStream, options: StreamOptions): string`](#addstreammediastream-mediastream-options-streamoptions-string)
@@ -44,12 +44,13 @@
 
 # Project description
 
-This library lets you easily upload videos to api.video from a composition of several media streams. The position and size of each stream can be set in a flexible and easy way. 
+This library lets you easily record & upload videos to api.video from a composition of several media streams. The position and size of each stream can be set in a flexible and easy way. 
 
 This allows for example, with only a few lines of code, to create a video composed of:
 "entire screen capture in the left half, window #1 capture in the right half, and the webcam in a circular shape in the bottom left of the video".
 
-A sample app is available [here](https://record.a.video/).
+The code of a small Next.js application demonstrating the different features offered by the library is available in the [examples/record.a.video](https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video) folder. If you want to try it live, go here: [https://record.a.video](https://record.a.video/).
+
 
 # Getting started
 
@@ -76,9 +77,9 @@ var composer = new MediaStreamComposer({
 }); 
 ```
 
-### Installation method #2: typescript
+### Installation method #2: ES6 modules
 
-If you use Typescript you can add the library as a dependency to your project with 
+You can add the library as a dependency to your project with 
 
 ```sh
 $ npm install --save @api.video/media-stream-composer
@@ -86,7 +87,7 @@ $ npm install --save @api.video/media-stream-composer
 
 You can then use the library in your script: 
 
-```typescript
+```javascript
 import { MediaStreamComposer } from '@api.video/media-stream-composer'
 
 const composer = new MediaStreamComposer({
@@ -109,7 +110,7 @@ Include the library in your HTML file like so:
 </head>
 ```
 
-Then, once the `window.onload` event has been trigered, instanciate the composer using `new MediaStreamComposer()`:
+Then you can instantiate the composer using `new MediaStreamComposer()`:
 ```html
 ...
 <script type="text/javascript"> 
@@ -124,11 +125,11 @@ Then, once the `window.onload` event has been trigered, instanciate the composer
 
 # Documentation
 
-## Instanciation
+## Instantiation
 
 ### Options 
 
-The media stream composer is instanciated using and an `options` object. At the moment, it containts only one option: `resolution`. If provided, this option must contain a `width` and a `height` property. This resolution will be used to create the canvas element that will be used to draw the streams. It will also be used to set the resolution of the video when it is uploaded.
+The media stream composer is instantiated using an `options` object. At the moment, it contains only one option: `resolution`. If provided, this option must contain a `width` and a `height` property. This resolution will be used to create the canvas element that will be used to draw the streams. It will also be used to set the resolution of the video when it is uploaded.
 
 If the `resolution` option is not provided, the canvas will be created with this resolution: 1280x720.
 
@@ -180,7 +181,7 @@ navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then((stre
 
 ### `updateStream(streamId: string, options: StreamOptions): void`
 
-Update the options of an existing stream. It takes the id of the stream and an `StreamOptions` parameter (same as for the addStream() method).
+Update the options of an existing stream. It takes the id of the stream (the one returned by the addStream() method) and an `StreamOptions` parameter (same as for the addStream() method).
 
 **Example**
 
@@ -192,7 +193,7 @@ composer.updateStream(streamId, {
 
 ### `removeStream(id: string): void`
 
-Remove a stream from the composition. It takes the id of the stream.
+Remove a stream from the composition. The id is the same as the one returned by the addStream() method.
 
 **Example**
 
@@ -255,7 +256,7 @@ const stream = composer.getStream(streamId);
 
 ### `moveUp(streamId: string): void`
 
-Move a stream up in the composition (ie. move it above the stream that was above it). It takes the id of the stream.
+Move a stream up in the composition (ie. move it above the stream that was above it). The id is the same as the one returned by the addStream() method.
 
 **Example**
 
@@ -265,7 +266,7 @@ composer.moveUp(streamId);
 
 ### `moveDown(streamId: string): void`
 
-Move a stream down in the composition (ie. move it below the stream that was below it). It takes the id of the stream.
+Move a stream down in the composition (ie. move it below the stream that was below it). The id is the same as the one returned by the addStream() method.
 
 **Example**
 
@@ -524,7 +525,7 @@ It has the following features:
                     startButton.disabled = false;
                 }
 
-    
+
                 mediaStreamComposer.setDrawingSettings({
                     color: "#FF0000",
                     lineWidth: 5,
