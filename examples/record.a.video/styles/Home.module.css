@@ -1,0 +1,78 @@
+.container {
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.columnsContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.columnsContainer > div {
+  margin: 1em;
+}
+
+.columnsContainer fieldset {
+  width: 100%;
+}
+
+.columnsContainer > div h2:first-child {
+  margin-top: 0.8em
+}
+
+.table {
+  margin-top: 1em;
+}
+
+.table thead tr th:first-child {
+  font-weight: bold;
+}
+
+.tableActions button {
+  min-width: 0;
+}
+
+.table button {
+  padding: 0;
+}
+
+
+.toogleButtonIcon {
+  margin-right: 0.2em;
+  position: relative;
+  top: -0.02em;
+}
+
+.settingsPaper {
+  padding: 0px 1em 1em 1em;
+  min-width: 400px;
+}
+
+.settingsPaper h2 {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+  
+  .settingsPaper h2 button {
+    text-align: right;
+  }
+
+  .settingsPaper .noStream {
+    text-align: center;
+    font-style: italic;
+  }
+
+  .previewPaper {
+    padding: 0px 1em 1em 1em;
+  }
+
+  .previewPaper div {
+    border-width: 1;
+     background-color: black;
+     border-color: black;
+     border-style: solid;
+  }
