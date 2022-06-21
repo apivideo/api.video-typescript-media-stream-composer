@@ -144,14 +144,14 @@ export default class MouseEventListener {
             let overStream: OverStream | undefined;
 
 
-            for (let streamId of streamIds) {
-                let locations: StreamMouseLocation[] = [];
+            for (const streamId of streamIds) {
+                const locations: StreamMouseLocation[] = [];
                 const stream = this.streams[streamId];
 
                 if (!stream) {
                     continue;
                 }
-                let {
+                const {
                     x,
                     y,
                     width,
@@ -182,7 +182,7 @@ export default class MouseEventListener {
                     index = stream.displaySettings.index!;
                     overStream = {
                         stream,
-                        locations: locations
+                        locations
                     }
                 }
             }
@@ -194,4 +194,4 @@ export default class MouseEventListener {
             }));
         }
     }
-} 
+}

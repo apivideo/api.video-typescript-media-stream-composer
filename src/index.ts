@@ -2,27 +2,28 @@ import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, Progr
 import { AddStreamOptions, VideoStreamMerger } from "video-stream-merger";
 import MouseEventListener, { DragEvent, MoveEvent } from "./mouse-event-listener";
 
-
 export interface Options {
     resolution: Resolution
 };
 
+export type StreamPosition = "contain" | "cover" | "fixed";
+export type StreamMask = "none" | "circle";
+
 export interface StreamOptions {
     name?: string;
-    position?: "contain" | "cover" | "fixed";
+    position?: StreamPosition;
     x?: number;
     y?: number;
     width?: number;
     height?: number;
     draggable?: boolean;
     resizable?: boolean;
-    mask?: Mask;
+    mask?: StreamMask;
     index?: number;
     mute?: boolean;
     onClick?: (streamId: string, event: { x: number, y: number }) => void;
 }
 
-type Mask = "none" | "circle";
 
 interface StreamDisplaySettings {
     displayResolution: Resolution,
@@ -48,22 +49,6 @@ interface Position {
     y: number;
 }
 
-interface Drag {
-    hasMoved: boolean,
-    streamId: string;
-    mouseStartPosition: {
-        x: number;
-        y: number;
-    };
-    streamStartPosition: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        radius?: number;
-    };
-}
-
 export interface StreamDetails {
     id: string;
     options: StreamOptions;
@@ -77,10 +62,7 @@ interface DrawingSettings {
     autoEraseDelay: number;
 }
 
-type MouseTool = "draw" | "move-resize";
-
-type MouseAction = "move" | "circle-resize"
-    | "top-resize" | "right-resize" | "bottom-resize" | "left-resize";
+export type MouseTool = "draw" | "move-resize";
 
 type RecordingOptions = ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken;
 
@@ -166,7 +148,7 @@ export class MediaStreamComposer {
         if (!this.merger) {
             this.init();
         }
-        let streamId = "" + Object.keys(this.streams).length.toString();
+        const streamId = "" + Object.keys(this.streams).length.toString();
 
         options = this.validateOptions(options);
 
@@ -233,8 +215,8 @@ export class MediaStreamComposer {
         const currentIndex = thisStream.displaySettings.index;
         let skip = true;
 
-        for (let stream of Object.values(this.streams)) {
-            if (stream.displaySettings.index == currentIndex + indexChange) {
+        for (const stream of Object.values(this.streams)) {
+            if (stream.displaySettings.index === currentIndex + indexChange) {
                 skip = false;
                 stream.displaySettings.index -= indexChange;
             }
@@ -312,17 +294,20 @@ export class MediaStreamComposer {
         this.getStreams().forEach(s => this.merger?.updateIndex(s.stream, s.displaySettings.index));
     }
 
-    private calculateCoverDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: Mask): DimensionsCalculationResult {
-        let width, height;
+    private calculateCoverDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: StreamMask): DimensionsCalculationResult {
+        let width;
+        let height;
+
         if (elementDimentions.width / containerDimentions.width > elementDimentions.height / containerDimentions.height) {
             height = containerDimentions.height;
-            width = mask != "circle" ? elementDimentions.width * containerDimentions.height / elementDimentions.height : height;
+            width = mask !== "circle" ? elementDimentions.width * containerDimentions.height / elementDimentions.height : height;
         } else {
             width = containerDimentions.width;
-            height = mask != "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
+            height = mask !== "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
         };
 
-        let x = 0, y = 0;
+        let x = 0;
+        let y = 0;
         if (width > containerDimentions.width) {
             x = (containerDimentions.width - width) / 2;
         }
@@ -337,18 +322,22 @@ export class MediaStreamComposer {
         }
     }
 
-    private calculateContainDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: Mask): DimensionsCalculationResult {
-        let width, height, radius;
+    private calculateContainDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: StreamMask): DimensionsCalculationResult {
+        let width;
+        let height;
+        let radius;
+
         if (elementDimentions.width / containerDimentions.width > elementDimentions.height / containerDimentions.height) {
             width = containerDimentions.width;
-            height = mask != "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
+            height = mask !== "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
             radius = width! / 2;
         } else {
             height = containerDimentions.height;
-            width = mask != "circle" ? height * elementDimentions.width / elementDimentions.height : height;
+            width = mask !== "circle" ? height * elementDimentions.width / elementDimentions.height : height;
             radius = height! / 2;
         };
-        let x = 0, y = 0;
+        let x = 0;
+        let y = 0;
         if (width < containerDimentions.width) {
             x = (containerDimentions.width - width) / 2;
         }
@@ -363,20 +352,20 @@ export class MediaStreamComposer {
         }
     }
 
-    private calculateFixedDimensions(containerDimentions: Resolution, elementDimentions: Resolution, targetDimensions: Resolution, position?: Position, mask?: Mask): DimensionsCalculationResult {
+    private calculateFixedDimensions(containerDimentions: Resolution, elementDimentions: Resolution, targetDimensions: Resolution, position?: Position, mask?: StreamMask): DimensionsCalculationResult {
 
         let width = typeof targetDimensions.width === "undefined"
             ? undefined
             : typeof targetDimensions.width === "number"
                 ? targetDimensions.width
-                : parseInt(targetDimensions.width || "100%") * containerDimentions.width / 100;
+                : parseInt(targetDimensions.width || "100%", 10) * containerDimentions.width / 100;
         let height = typeof targetDimensions.height === "undefined"
             ? undefined
             : typeof targetDimensions.height === "number"
                 ? targetDimensions.height
-                : parseInt(targetDimensions.height || "100%") * containerDimentions.height / 100;
+                : parseInt(targetDimensions.height || "100%", 10) * containerDimentions.height / 100;
 
-        let radius = undefined;
+        let radius;
 
         if (width === undefined && height === undefined) {
             width = containerDimentions.width;
@@ -423,7 +412,7 @@ export class MediaStreamComposer {
         } else if (options.position === "cover") {
             pos = this.calculateCoverDimensions(containerResolution, streamResolution, options.mask);
         } else {
-            let alignmentOrPosition: Position = { ...options } as Position;
+            const alignmentOrPosition: Position = { ...options } as Position;
 
             pos = this.calculateFixedDimensions(containerResolution, streamResolution, { width: options.width!, height: options.height! }, alignmentOrPosition, options.mask);
         }
@@ -466,7 +455,7 @@ export class MediaStreamComposer {
             }
         }
         if (this.mouseTool === "move-resize" && e.dragStart.stream) {
-            if (e.dragStart.stream.options.resizable && e.dragStart.locations?.find(e => ["top", "right", "bottom", "left", "circle"].indexOf(e) !== -1)) {
+            if (e.dragStart.stream.options.resizable && e.dragStart.locations?.find((location) => ["top", "right", "bottom", "left", "circle"].indexOf(location) !== -1)) {
                 if (e.dragStart.locations?.indexOf("circle") !== -1) {
                     const circleCenter = {
                         x: e.dragStart.x - e.dragStart.offsetX! + (e.dragStart.circleRadius || 0),

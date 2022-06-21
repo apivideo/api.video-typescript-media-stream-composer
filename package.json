@@ -1,6 +1,6 @@
 {
   "name": "@api.video/media-stream-composer",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "api.video media stream composer",
   "repository": {
     "type": "git",
@@ -41,6 +41,7 @@
   "dependencies": {
     "@api.video/media-recorder": "^1.0.5",
     "core-js": "^3.8.3",
+    "material-ui-popup-state": "^3.1.1",
     "video-stream-merger": "^4.0.1"
   }
 }

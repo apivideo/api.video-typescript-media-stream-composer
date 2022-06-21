@@ -8,5 +8,6 @@
         "forceConsistentCasingInFileNames": true,
         "declaration": true,
         "rootDirs": ["./src", "./test"]
-    }
+    },
+    "exclude": ["examples"]
 }

@@ -2,16 +2,18 @@ import { ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWi
 export interface Options {
     resolution: Resolution;
 }
+export declare type StreamPosition = "contain" | "cover" | "fixed";
+export declare type StreamMask = "none" | "circle";
 export interface StreamOptions {
     name?: string;
-    position?: "contain" | "cover" | "fixed";
+    position?: StreamPosition;
     x?: number;
     y?: number;
     width?: number;
     height?: number;
     draggable?: boolean;
     resizable?: boolean;
-    mask?: Mask;
+    mask?: StreamMask;
     index?: number;
     mute?: boolean;
     onClick?: (streamId: string, event: {
@@ -19,7 +21,6 @@ export interface StreamOptions {
         y: number;
     }) => void;
 }
-declare type Mask = "none" | "circle";
 interface StreamDisplaySettings {
     displayResolution: Resolution;
     streamResolution: Resolution;
@@ -46,7 +47,7 @@ interface DrawingSettings {
     lineWidth: number;
     autoEraseDelay: number;
 }
-declare type MouseTool = "draw" | "move-resize";
+export declare type MouseTool = "draw" | "move-resize";
 declare type RecordingOptions = ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken;
 export declare class MediaStreamComposer {
     private options;
