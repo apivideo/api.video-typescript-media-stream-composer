@@ -1,6 +1,10 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.1.3] - 2022-06-22
+- Clean npm package bundle
+- Update code samples
+
 ## [0.1.2] - 2022-06-22
 - Add `hidden` and `opacity` options
   

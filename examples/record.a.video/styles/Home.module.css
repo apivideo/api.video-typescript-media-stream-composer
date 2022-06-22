@@ -9,10 +9,13 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1600px;
 }
 
 .columnsContainer > div {
   margin: 1em;
+  flex: 1;
 }
 
 .columnsContainer fieldset {
@@ -48,7 +51,8 @@
 
 .settingsPaper {
   padding: 0px 1em 1em 1em;
-  min-width: 400px;
+  min-width: 290px;
+  width: 100%;
 }
 
 .settingsPaper h2 {
@@ -57,22 +61,33 @@
   justify-content: space-between;
 }
   
-  .settingsPaper h2 button {
-    text-align: right;
-  }
+.settingsPaper h2 button {
+  text-align: right;
+}
 
-  .settingsPaper .noStream {
-    text-align: center;
-    font-style: italic;
-  }
+.settingsPaper .noStream {
+  text-align: center;
+  font-style: italic;
+}
 
+.previewPaper {
+  padding: 0px 1em 1em 1em;
+}
+
+
+@media (min-width: 540px) {
   .previewPaper {
-    padding: 0px 1em 1em 1em;
+    min-width: 500px;
   }
 
-  .previewPaper div {
-    border-width: 1;
-     background-color: black;
-     border-color: black;
-     border-style: solid;
+  .settingsPaper {
+    max-width: 360px;
   }
+}
+
+.previewPaper div {
+  border-width: 1;
+    background-color: black;
+    border-color: black;
+    border-style: solid;
+}
