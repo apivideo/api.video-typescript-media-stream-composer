@@ -21,6 +21,8 @@ export interface StreamOptions {
     mask?: StreamMask;
     index?: number;
     mute?: boolean;
+    hidden?: boolean;
+    opacity?: number;
     onClick?: (streamId: string, event: { x: number, y: number }) => void;
 }
 
@@ -31,6 +33,8 @@ interface StreamDisplaySettings {
     position: Position,
     radius?: number;
     index: number;
+    hidden: boolean;
+    opacity: number;
 }
 
 interface DimensionsCalculationResult {
@@ -105,18 +109,20 @@ export class MediaStreamComposer {
     }
 
     public updateStream(streamId: string, options: StreamOptions) {
-        options = this.validateOptions(options);
         const stream = this.streams[streamId];
 
-        const newOptions = {
+        options = {
             ...stream.options,
             ...options,
             index: options.index || stream.displaySettings.index,
         };
+
+        options = this.validateOptions(options);
+
         this.streams[streamId] = {
             ...stream,
-            options: newOptions,
-            displaySettings: this.buildStreamDisplaySettings(streamId, stream.stream, newOptions)
+            options,
+            displaySettings: this.buildStreamDisplaySettings(streamId, stream.stream, options)
         };
 
 
@@ -232,9 +238,16 @@ export class MediaStreamComposer {
     private drawStream(streamId: string, ctx: CanvasRenderingContext2D, frame: CanvasImageSource, done: () => void) {
         const displaySettings = this.streams[streamId].displaySettings;
 
+        if (displaySettings.hidden) {
+            done();
+            return;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = displaySettings.opacity / 100;
+
         switch (this.streams[streamId].options.mask) {
             case "circle":
-                ctx.save();
                 ctx.beginPath();
 
                 const radius = displaySettings.radius!;
@@ -261,17 +274,17 @@ export class MediaStreamComposer {
                     wider ? displaySettings.displayResolution.height : adaptedHeight,
                 );
 
-                ctx.restore();
                 break;
             default:
                 ctx.drawImage(frame, displaySettings.position.x, displaySettings.position.y, displaySettings.displayResolution.width, displaySettings.displayResolution.height);
         }
+        ctx.restore();
 
         done();
     }
 
     private validateOptions(options: StreamOptions): StreamOptions {
-        if(!options.position) {
+        if (!options.position) {
             options.position = "contain";
         }
         if (options.position === "cover" || options.position === "contain") {
@@ -422,6 +435,8 @@ export class MediaStreamComposer {
             ...pos,
             streamResolution,
             index: options.index || Object.keys(this.streams).length + 1,
+            hidden: typeof options.hidden !== "undefined" ? options.hidden : false,
+            opacity: typeof options.opacity !== "undefined" ? options.opacity : 100,
         };
     }
 

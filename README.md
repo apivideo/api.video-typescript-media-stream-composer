@@ -154,6 +154,8 @@ The addStream() method adds a stream to the composition. It takes a `MediaStream
 |   resizable | boolean                                                      | false         | Whether the stream can be resized by dragging its borders (see bellow [mouse interactions](#mouse-interactions))                                          |
 |        mask | `none` \| `circle`                                           | `none`        | Whether the stream should be masked with a circle or not                                                                                                  |
 |        mute | boolean                                                      | false         | Whether the stream should be muted or not                                                                                                                 |
+|      hidden | boolean                                                      | false         | Whether the stream should be hidden or not
+|     opacity | number                                                       | 100         | Opacity of the stream (from 0 to 100)                                                                                                       |
 |     onClick | (streamId: string, event: { x: number; y: number; }) => void | undefined     | A callback function that will be called when the stream is clicked                                                                                        |
 
 **Example**
@@ -169,6 +171,7 @@ navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then((stre
         draggable: true,
         resizable: true,
         mask: "circle",
+        opacity: 90,
         onClick: (streamId, event) => {
             console.log(streamId, event.x, event.y);
         }
@@ -187,7 +190,7 @@ Update the options of an existing stream. It takes the id of the stream (the one
 
 ```javascript
 composer.updateStream(streamId, {
-    position: "cover",
+    hidden: true,
 });
 ```
 

@@ -16,6 +16,8 @@ export interface StreamOptions {
     mask?: StreamMask;
     index?: number;
     mute?: boolean;
+    hidden?: boolean;
+    opacity?: number;
     onClick?: (streamId: string, event: {
         x: number;
         y: number;
@@ -27,6 +29,8 @@ interface StreamDisplaySettings {
     position: Position;
     radius?: number;
     index: number;
+    hidden: boolean;
+    opacity: number;
 }
 interface Resolution {
     height: number;

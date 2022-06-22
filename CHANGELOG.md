@@ -1,6 +1,9 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.1.2] - 2022-06-22
+- Add `hidden` and `opacity` options
+  
 ## [0.1.1] - 2022-06-22
 - Fix mouse coordinates when canvas display dimensions is different from it's real dimnsions
 
