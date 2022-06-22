@@ -55,15 +55,30 @@ export default class MouseEventListener {
     constructor(canvas: HTMLCanvasElement, streams: { [id: string]: StreamDetails }) {
         this.streams = streams;
 
-        const fromMouseEvent = (e: MouseEvent) => ({ x: e.offsetX, y: e.offsetY });
-        const fromTouchEvent = (e: TouchEvent, fct: ((e: { x: number, y: number }) => void)) => {
+        const getDimensionsRatio = () => {
+            return {
+                widthRatio: canvas.clientWidth / canvas.width,
+                heightRatio: canvas.clientHeight / canvas.height,
+            }
+        }
+
+        const fromMouseEvent = (e: MouseEvent) => {
+            const dimensionsRatio = getDimensionsRatio();
+            return {
+                x: e.offsetX / dimensionsRatio.widthRatio,
+                y: e.offsetY / dimensionsRatio.heightRatio,
+            };
+        };
+        const fromTouchEvent = (e: TouchEvent, fct: ((e: Coordinates) => void)) => {
             if (!e.targetTouches[0]) {
                 return;
             }
             const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+            const dimensionsRatio = getDimensionsRatio();
+
             fct({
-                x: e.targetTouches[0].pageX - rect.left,
-                y: e.targetTouches[0].pageY - rect.top,
+                x: (e.targetTouches[0].pageX - rect.left) * dimensionsRatio.widthRatio,
+                y: (e.targetTouches[0].pageY - rect.top) * dimensionsRatio.heightRatio,
             });
         };
 
@@ -110,31 +125,31 @@ export default class MouseEventListener {
         }
         this.dragStart = undefined;
     }
-    private mouseDown(e: Coordinates) {
+    private mouseDown(mouseCoordinates: Coordinates) {
         if (this.overStream) {
             this.dragStart = {
                 ...this.overStream,
-                offsetX: e.x - this.overStream.stream.displaySettings.position.x,
-                offsetY: e.y - this.overStream.stream.displaySettings.position.y,
+                offsetX: mouseCoordinates.x - this.overStream.stream.displaySettings.position.x,
+                offsetY: mouseCoordinates.y - this.overStream.stream.displaySettings.position.y,
                 ...(this.overStream.stream.options.mask === "circle" ? { circleRadius: this.overStream.stream.displaySettings.radius } : {}),
                 streamWidth: this.overStream.stream.displaySettings.displayResolution.width,
                 streamHeight: this.overStream.stream.displaySettings.displayResolution.height,
-                x: e.x,
-                y: e.y,
+                x: mouseCoordinates.x,
+                y: mouseCoordinates.y,
                 hasMoved: false,
             };
         } else {
             this.dragStart = {
-                x: e.x,
-                y: e.y,
+                x: mouseCoordinates.x,
+                y: mouseCoordinates.y,
                 hasMoved: false,
             };
         }
     }
-    private mouseMove(e: Coordinates) {
+    private mouseMove(mouseCoordinates: Coordinates) {
         if (this.dragStart) {
             this.onDragListeners.forEach(l => l({
-                ...e,
+                ...mouseCoordinates,
                 dragStart: this.dragStart!,
             }));
             this.dragStart.hasMoved = true;
@@ -161,7 +176,7 @@ export default class MouseEventListener {
                 if (stream.options.mask === "circle") {
                     const centerX = x + stream.displaySettings.radius!;
                     const centerY = y + stream.displaySettings.radius!;
-                    const distance = Math.sqrt(Math.pow(centerX - e.x, 2) + Math.pow(centerY - e.y, 2));
+                    const distance = Math.sqrt(Math.pow(centerX - mouseCoordinates.x, 2) + Math.pow(centerY - mouseCoordinates.y, 2));
                     if (distance <= stream.displaySettings.radius!) {
                         locations.push("inside");
                     }
@@ -170,12 +185,12 @@ export default class MouseEventListener {
                     }
                 } else {
 
-                    if (e.x > x && e.x < x + width && e.y > y && e.y < y + height) locations.push("inside");
+                    if (mouseCoordinates.x > x && mouseCoordinates.x < x + width && mouseCoordinates.y > y && mouseCoordinates.y < y + height) locations.push("inside");
 
-                    if (e.x > x && e.x < x + width && e.y > y - 10 && e.y < y + 10) locations.push("top");
-                    if (e.x > x && e.x < x + width && e.y > y + height - 10 && e.y < y + height + 10) locations.push("bottom");
-                    if (e.y > y && e.y < y + height && e.x > x - 10 && e.x < x + 10) locations.push("left");
-                    if (e.y > y && e.y < y + height && e.x > x + width - 10 && e.x < x + width + 10) locations.push("right");
+                    if (mouseCoordinates.x > x && mouseCoordinates.x < x + width && mouseCoordinates.y > y - 10 && mouseCoordinates.y < y + 10) locations.push("top");
+                    if (mouseCoordinates.x > x && mouseCoordinates.x < x + width && mouseCoordinates.y > y + height - 10 && mouseCoordinates.y < y + height + 10) locations.push("bottom");
+                    if (mouseCoordinates.y > y && mouseCoordinates.y < y + height && mouseCoordinates.x > x - 10 && mouseCoordinates.x < x + 10) locations.push("left");
+                    if (mouseCoordinates.y > y && mouseCoordinates.y < y + height && mouseCoordinates.x > x + width - 10 && mouseCoordinates.x < x + width + 10) locations.push("right");
                 }
 
                 if (locations.length > 0 && stream.displaySettings.index! > index) {
@@ -190,7 +205,7 @@ export default class MouseEventListener {
 
             this.onMoveListeners.forEach(l => l({
                 ...(this.overStream ? this.overStream! : {}),
-                ...e
+                ...mouseCoordinates
             }));
         }
     }

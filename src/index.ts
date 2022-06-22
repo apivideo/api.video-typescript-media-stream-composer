@@ -119,6 +119,7 @@ export class MediaStreamComposer {
             displaySettings: this.buildStreamDisplaySettings(streamId, stream.stream, newOptions)
         };
 
+
         this.cleanIndexes();
     }
 
@@ -469,30 +470,31 @@ export class MediaStreamComposer {
                         height: e.dragStart.streamHeight! * change,
                         x: e.dragStart.x - e.dragStart.offsetX! + (e.dragStart.circleRadius! - newRadius),
                         y: e.dragStart.y - e.dragStart.offsetY! + (e.dragStart.circleRadius! - newRadius),
+                        position: "fixed" as StreamPosition,
                     };
                     this.updateStream(e.dragStart.stream.id, newDisplaySettings);
                 } else if (e.dragStart.locations?.indexOf("bottom") !== -1) {
                     const height = e.dragStart.streamHeight! + e.y - e.dragStart.y;
                     const width = e.dragStart.streamWidth! * height / e.dragStart.streamHeight!;
                     const x = e.dragStart.x - e.dragStart.offsetX! - (width - e.dragStart.streamWidth!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { height, width, x });
+                    this.updateStream(e.dragStart.stream.id, { position: "fixed", height, width, x });
                 } else if (e.dragStart.locations?.indexOf("top") !== -1) {
                     const height = e.dragStart.streamHeight! - (e.y - e.dragStart.y);
                     const width = e.dragStart.streamWidth! * height / e.dragStart.streamHeight!;
                     const y = e.dragStart.y - e.dragStart.offsetY! + (e.y - e.dragStart.y);
                     const x = e.dragStart.x - e.dragStart.offsetX! - (width - e.dragStart.streamWidth!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { height, y, x, width });
+                    this.updateStream(e.dragStart.stream.id, { position: "fixed", height, y, x, width });
                 } else if (e.dragStart.locations?.indexOf("left") !== -1) {
                     const width = e.dragStart.streamWidth! - (e.x - e.dragStart.x);
                     const height = e.dragStart.streamHeight! * width / e.dragStart.streamWidth!;
                     const x = e.dragStart.x - e.dragStart.offsetX! + (e.x - e.dragStart.x);
                     const y = e.dragStart.y - e.dragStart.offsetY! - (height - e.dragStart.streamHeight!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { width, x, height, y });
+                    this.updateStream(e.dragStart.stream.id, { position: "fixed", width, x, height, y });
                 } else if (e.dragStart.locations?.indexOf("right") !== -1) {
                     const width = e.dragStart.streamWidth! + (e.x - e.dragStart.x)
                     const height = e.dragStart.streamHeight! * width / e.dragStart.streamWidth!;
                     const y = e.dragStart.y - e.dragStart.offsetY! - (height - e.dragStart.streamHeight!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { width, height, y });
+                    this.updateStream(e.dragStart.stream.id, { position: "fixed", width, height, y });
                 }
             } else if (e.dragStart.stream.options.draggable && e.dragStart.locations?.indexOf("inside") !== -1) {
                 this.updateStream(e.dragStart.stream.id, {
