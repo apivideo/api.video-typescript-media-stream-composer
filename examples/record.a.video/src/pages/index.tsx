@@ -7,6 +7,8 @@ import GestureIcon from '@mui/icons-material/Gesture'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
 import StopRecordingIcon from '@mui/icons-material/StopCircle'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityOnIcon from '@mui/icons-material/Visibility';
 import { FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
@@ -20,6 +22,7 @@ import React, { useEffect, useState } from 'react'
 import { CirclePicker } from 'react-color'
 import styles from '../../styles/Home.module.css'
 import StreamDialog, { StreamFormValues } from '../components/StreamDialog'
+import { useRouter } from 'next/router'
 
 const theme = createTheme({
   palette: {
@@ -44,7 +47,7 @@ const theme = createTheme({
 
 const WIDTH = 1024;
 const HEIGHT = 768;
-const UPLOAD_TOKEN = process.env.NEXT_PUBLIC_UPLOAD_TOKEN;
+const DEFAULT_UPLOAD_TOKEN = process.env.NEXT_PUBLIC_UPLOAD_TOKEN!;
 
 const composer = (() => {
   const mediaStreamComposer = new MediaStreamComposer({
@@ -73,10 +76,18 @@ const Home: NextPage = () => {
   const [playerUrl, setPlayerUrl] = useState<string | null>(null);
   const [mouseTool, setMouseTool] = useState<MouseTool>("move-resize");
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
+  const [uploadToken, setUploadToken] = useState<string>(DEFAULT_UPLOAD_TOKEN);
 
   const [drawingColor, setDrawingColor] = useState("#ff6900");
   const [drawingAutoEraseDelay, setDrawingAutoEraseDelay] = useState(0);
 
+  const router = useRouter()
+
+  useEffect(() => {
+    if(router.query.uploadToken) {
+      setUploadToken(router.query.uploadToken as string);
+    }
+  }, [router.query])
 
   // update the drawing settings when related states are changed
   useEffect(() => {
@@ -127,19 +138,24 @@ const Home: NextPage = () => {
         : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
 
     setTimeout(() => {
-      composer && composer.addStream(stream, {
-        position: opts.position,
-        width: opts.width ? parseInt(opts.width) * WIDTH / 100 : undefined,
-        height: opts.height ? parseInt(opts.height) * HEIGHT / 100 : undefined,
-        x: opts.left ? parseInt(opts.left) * WIDTH / 100 : undefined,
-        y: opts.top ? parseInt(opts.top) * HEIGHT / 100 : undefined,
-        resizable: opts.resizable,
-        draggable: opts.draggable,
-        mask: opts.mask,
-        name: `#${composer.getStreams().length} ${opts.type}`,
-      });
-
+      if (composer) {
+        composer.addStream(stream, {
+          position: opts.position,
+          width: opts.width ? parseInt(opts.width, 10) * WIDTH / 100 : undefined,
+          height: opts.height ? parseInt(opts.height, 10) * HEIGHT / 100 : undefined,
+          x: opts.left ? parseInt(opts.left, 10) * WIDTH / 100 : undefined,
+          y: opts.top ? parseInt(opts.top, 10) * HEIGHT / 100 : undefined,
+          resizable: opts.resizable,
+          draggable: opts.draggable,
+          opacity: opts.opacity,
+          mask: opts.mask,
+          name: `#${composer.getStreams().length} ${opts.type}`,
+        });
+      }
       composer.appendCanvasTo("#canvas-container");
+      const canvas = composer.getCanvas();
+      canvas!.style.width = "100%";
+      canvas!.style.boxSizing = "unset";
       setStreams(composer.getStreams());
     }, 100);
   }
@@ -157,7 +173,7 @@ const Home: NextPage = () => {
         <h1>@api.video/media-stream-composer library sample application</h1>
         <div>
           <p>This Next.js application aims to show the features offered by the <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer">@api.video/media-stream-composer</a> library. </p>
-          <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">examples/record.a.video</a>.</p>
+          <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">record.a.video</a>.</p>
 
         </div>
         <div className={styles.columnsContainer}>
@@ -217,18 +233,22 @@ const Home: NextPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {streams.sort((s1, s2) => s2.displaySettings.index - s1.displaySettings.index).map((row, i) => (
+                    {streams.sort((s1, s2) => s2.displaySettings.index - s1.displaySettings.index).map((stream, i) => (
                       <TableRow
                         key={i}
                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                       >
                         <TableCell component="th" scope="row">
-                          {row.options.name}
+                          {stream.options.name}
                         </TableCell>
                         <TableCell className={styles.tableActions} align="right">
-                          <Button disabled={i === 0} onClick={() => { composer.moveUp(row.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
-                          <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(row.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
-                          <Button onClick={() => { composer.removeStream(row.id); setStreams(composer.getStreams()); }}><DeleteIcon></DeleteIcon></Button>
+                          <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
+                          <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
+                          { stream.displaySettings.hidden
+                            ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false}); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
+                            : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true}); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
+
+                          <Button onClick={() => { composer.removeStream(stream.id); setStreams(composer.getStreams()); }}><DeleteIcon></DeleteIcon></Button>
                         </TableCell>
 
                       </TableRow>
@@ -291,7 +311,7 @@ const Home: NextPage = () => {
 
             <Button disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
               if (!isRecording) {
-                composer.startRecording({ uploadToken: UPLOAD_TOKEN! });
+                composer.startRecording({ uploadToken });
                 setPlayerUrl(null);
                 setIsRecording(true);
               } else {
@@ -302,13 +322,13 @@ const Home: NextPage = () => {
               ? <><StartRecordingIcon className={styles.toogleButtonIcon} />start recording</>
               : <><StopRecordingIcon className={styles.toogleButtonIcon} />stop recording ({recordingDuration} sec)</>}
             </Button>
-            {playerUrl !== null && <p>Your recording is here: <br /><a href={playerUrl} rel="noreferrer" target="_blank">{playerUrl}</a></p>}
+            {playerUrl !== null && <p>Your recording is available: <br /><a href={playerUrl} rel="noreferrer" target="_blank">recording</a>.</p>}
           </Paper>
 
 
-          <Paper elevation={4} className={styles.previewPaper}>
+          <Paper elevation={4} className={styles.previewPaper} style={{flex: 1}}>
             <h2>Preview</h2>
-            <div id="canvas-container" style={{ width: WIDTH, height: HEIGHT }} />
+            <div id="canvas-container" style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}`}} />
           </Paper>
 
           <StreamDialog
