@@ -10,6 +10,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import { useEffect, useState } from 'react'
 import { ContainDimentionIcon, CoverDimentionIcon, FixedDimensionIcon } from './Icons'
+import styles from '../../styles/Home.module.css'
 
 export interface StreamFormValues {
     type: StreamType;
@@ -89,8 +90,8 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 value={type}
                                 exclusive
                                 onChange={(v, w) => w && setType(w)}>
-                                <ToggleButton disabled={!screencastAvailable} value="screen"><ScreenshotMonitorIcon className="toogleButtonIcon" /> Screencast</ToggleButton>
-                                <ToggleButton disabled={props.devices.length === 0} value="webcam"><PhotoCameraFrontIcon className="toogleButtonIcon" /> Webcam</ToggleButton>
+                                <ToggleButton disabled={!screencastAvailable} value="screen"><ScreenshotMonitorIcon  className={styles.toogleButtonIcon} /> Screencast</ToggleButton>
+                                <ToggleButton disabled={props.devices.length === 0} value="webcam"><PhotoCameraFrontIcon  className={styles.toogleButtonIcon} /> Webcam</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>
@@ -121,9 +122,9 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 value={position}
                                 exclusive
                                 onChange={(v, w) => w && setPosition(w)}>
-                                <ToggleButton value="cover"><CoverDimentionIcon className="toogleButtonIcon" /> cover</ToggleButton>
-                                <ToggleButton value="contain"><ContainDimentionIcon className="toogleButtonIcon" />contain</ToggleButton>
-                                <ToggleButton value="fixed"><FixedDimensionIcon className="toogleButtonIcon" />fixed</ToggleButton>
+                                <ToggleButton value="cover"><CoverDimentionIcon  className={styles.toogleButtonIcon} /> cover</ToggleButton>
+                                <ToggleButton value="contain"><ContainDimentionIcon  className={styles.toogleButtonIcon} />contain</ToggleButton>
+                                <ToggleButton value="fixed"><FixedDimensionIcon  className={styles.toogleButtonIcon} />fixed</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>
@@ -223,7 +224,7 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 onChange={(v, w) => w && setMask(w)}
                             >
                                 <ToggleButton value="none">none</ToggleButton>
-                                <ToggleButton value="circle"><CircleIcon className="toogleButtonIcon" /> circle</ToggleButton>
+                                <ToggleButton value="circle"><CircleIcon  className={styles.toogleButtonIcon} /> circle</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>

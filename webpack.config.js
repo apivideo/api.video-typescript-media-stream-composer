@@ -1,3 +1,5 @@
+const webpack = require('webpack');
+
 module.exports = {
     entry: {
         uploader: ['core-js/stable/promise', './src/index.ts']
@@ -18,5 +20,10 @@ module.exports = {
         libraryTarget: 'umd',
         filename: 'index.js',
         globalObject: 'this'
-    }
+    },
+    plugins: [
+        new webpack.DefinePlugin({
+            __PACKAGE_VERSION__: JSON.stringify(require('./package.json').version),
+        })
+    ]
 };

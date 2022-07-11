@@ -1,6 +1,11 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.1.4] - 2022-07-11
+- Add origin headers
+- Add audio sources management
+- Handles async errors
+
 ## [0.1.3] - 2022-06-22
 - Clean npm package bundle
 - Update code samples

@@ -26,6 +26,10 @@
     - [`removeStream(id: string): void`](#removestreamid-string-void)
     - [`getStreams(): StreamDetails[]`](#getstreams-streamdetails)
     - [`getStream(id: string): StreamDetails`](#getstreamid-string-streamdetails)
+    - [`addAudioSource(mediaStream: MediaStream): string`](#addaudiosourcemediastream-mediastream-string)
+    - [`removeAudioSource(id: string): void`](#removeaudiosourceid-string-void)
+    - [`getAudioSources(): AudioSourceDetails[]`](#getaudiosources-audiosourcedetails)
+    - [`getAudioSource(audioSourceId: string): AudioSourceDetails`](#getaudiosourceaudiosourceid-string-audiosourcedetails)
     - [`moveUp(streamId: string): void`](#moveupstreamid-string-void)
     - [`moveDown(streamId: string): void`](#movedownstreamid-string-void)
     - [`startRecording(options: RecordingOptions): void`](#startrecordingoptions-recordingoptions-void)
@@ -39,6 +43,7 @@
     - [`setMouseTool(tool: "draw" | "move-resize"): void`](#setmousetooltool-draw--move-resize-void)
     - [`setDrawingSettings(settings: Partial<DrawingSettings>): void`](#setdrawingsettingssettings-partialdrawingsettings-void)
     - [`clearDrawing(): void`](#cleardrawing-void)
+    - [`addEventListener(event: string, listener: Function)`](#addeventlistenerevent-string-listener-function)
 - [Full examples](#full-examples)
   - ["Loom-like"](#loom-like)
 
@@ -257,6 +262,66 @@ Get the details of a stream. It takes the id of the stream. The id is the same a
 const stream = composer.getStream(streamId);
 ```
 
+
+
+
+
+
+
+### `addAudioSource(mediaStream: MediaStream): string`
+
+The addAudioSource() method adds a stream as an audio source to the composition. It takes a `MediaStream` parameter. The display won't be impacted by the stream. Only the audio will be mixed.
+                                                                           |
+
+**Example**
+
+```javascript
+
+navigator.mediaDevices.getDisplayMedia({ audio: { deviceId: selectedAudioSource }).then((stream) => {
+    const audioSourceId = composer.addAudioSource(stream);
+});
+
+```
+
+### `removeAudioSource(id: string): void`
+
+Remove an audio source from the composition. The id is the same as the one returned by the addAudioSource() method.
+
+**Example**
+
+```javascript
+composer.removeAudioSource(audioSourceId);
+```
+
+### `getAudioSources(): AudioSourceDetails[]`
+
+Returns an array of objects containing the details of all the streams in the composition.
+
+**Example**
+
+```javascript
+const audioSources = composer.getAudioSources();
+/*
+    audioSources: [{
+        "id": "audio_0",
+        "stream": {}
+    }]
+*/
+
+```
+
+### `getAudioSource(audioSourceId: string): AudioSourceDetails`
+
+Get the details of an audio source. It takes the id of the audio source. The id is the same as the one returned by the addAudioSource() method.
+
+**Example**
+
+```javascript
+const stream = composer.getAudioSource(audioSourceId);
+```
+
+
+
 ### `moveUp(streamId: string): void`
 
 Move a stream up in the composition (ie. move it above the stream that was above it). The id is the same as the one returned by the addStream() method.
@@ -406,6 +471,21 @@ Clear all the drawings on the canvas. It takes no parameter.
 ```javascript
 composer.clearDrawing();
 ```
+
+### `addEventListener(event: string, listener: Function)`
+
+Define an event listener for the media recorder. The following events are available:
+- `"error"`: when an error occurs
+- `"recordingStopped"`: when the recording is stopped
+
+**Example**
+
+```javascript
+    composer.addEventListener("error", (event) => {
+       console.log(event.data);
+    });
+```
+
 
 
 # Full examples 

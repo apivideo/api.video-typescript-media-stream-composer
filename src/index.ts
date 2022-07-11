@@ -1,9 +1,9 @@
-import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadResponse } from "@api.video/media-recorder";
+import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadError, VideoUploadResponse } from "@api.video/media-recorder";
 import { AddStreamOptions, VideoStreamMerger } from "video-stream-merger";
 import MouseEventListener, { DragEvent, MoveEvent } from "./mouse-event-listener";
 
 export interface Options {
-    resolution: Resolution
+    resolution: Resolution;
 };
 
 export type StreamPosition = "contain" | "cover" | "fixed";
@@ -60,10 +60,25 @@ export interface StreamDetails {
     stream: MediaStream;
 }
 
+export interface AudioSourceDetails {
+    id: string;
+    stream: MediaStream;
+}
+
+declare type EventType = "error" | "recordingStopped";
+
 interface DrawingSettings {
     color: string;
     lineWidth: number;
     autoEraseDelay: number;
+}
+
+let PACKAGE_VERSION = "";
+try {
+    // @ts-ignore
+    PACKAGE_VERSION = __PACKAGE_VERSION__ || "";
+} catch (e) {
+    // ignore
 }
 
 export type MouseTool = "draw" | "move-resize";
@@ -77,8 +92,10 @@ export class MediaStreamComposer {
     private recorder?: ApiVideoMediaRecorder;
     private canvas?: HTMLCanvasElement;
     private streams: { [id: string]: StreamDetails } = {};
+    private audioSources: { [id: string]: AudioSourceDetails } = {};
     private mouseTool: MouseTool | null = "move-resize";
     private isDrawing = false;
+    private eventTarget: EventTarget;
     private drawingSettings: DrawingSettings = {
         lineWidth: 2,
         color: "#000000",
@@ -87,6 +104,7 @@ export class MediaStreamComposer {
     private drawings: ({ coords: [number, number][], startTime: number, } & DrawingSettings)[] = [];
 
     constructor(options: Partial<Options>) {
+        this.eventTarget = new EventTarget();
         this.options = {
             resolution: {
                 width: 1280,
@@ -97,8 +115,23 @@ export class MediaStreamComposer {
     }
 
     public startRecording(options: RecordingOptions) {
-        this.recorder = new ApiVideoMediaRecorder(this.result!, options);
+        this.recorder = new ApiVideoMediaRecorder(this.result!, {
+            ...options,
+            origin: {
+                sdk: {
+                    name: "media-stream-composer",
+                    version: PACKAGE_VERSION
+                },
+                ...options.origin
+            },
+        });
+        this.recorder.addEventListener("error", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("error"), { data: (e as any).data })));
+        this.recorder.addEventListener("recordingStopped", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("recordingStopped"), { data: (e as any).data })));
         this.recorder.start();
+    }
+
+    public addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
+        this.eventTarget.addEventListener(type, callback, options);
     }
 
     public stopRecording(): Promise<VideoUploadResponse> {
@@ -151,11 +184,39 @@ export class MediaStreamComposer {
         this.cleanIndexes();
     }
 
+    public addAudioSource(mediaStream: MediaStream): string {
+        if (!this.merger) {
+            this.init();
+        }
+        const streamId = "audio_" + Object.keys(this.streams).length.toString();
+
+        this.audioSources[streamId] = {
+            id: streamId,
+            stream: mediaStream
+        }
+
+        this.merger!.addStream(mediaStream, {
+            draw: (ctx, frame, done) => {
+                done();
+            }
+        } as AddStreamOptions);
+
+        return streamId;
+    }
+
+    public removeAudioSource(id: string) {
+        const audioSource = this.audioSources[id];
+        if (audioSource) {
+            this.merger?.removeStream(audioSource.stream);
+            delete this.audioSources[id];
+        }
+    }
+
     public addStream(mediaStream: MediaStream, options: StreamOptions): string {
         if (!this.merger) {
             this.init();
         }
-        const streamId = "" + Object.keys(this.streams).length.toString();
+        const streamId = "video_" + Object.keys(this.streams).length.toString();
 
         options = this.validateOptions(options);
 
@@ -184,6 +245,14 @@ export class MediaStreamComposer {
 
     public getCanvas() {
         return this.canvas;
+    }
+
+    public getAudioSources(): AudioSourceDetails[] {
+        return Object.values(this.audioSources);
+    }
+
+    public getAudioSource(id: string): AudioSourceDetails {
+        return this.audioSources[id];
     }
 
     public getStreams(): StreamDetails[] {
@@ -215,6 +284,10 @@ export class MediaStreamComposer {
 
     public clearDrawing() {
         this.drawings = [];
+    }
+
+    private dispatch(type: EventType, data: any): boolean {
+        return this.eventTarget.dispatchEvent(Object.assign(new Event(type), { data }));
     }
 
     private updateIndex(streamId: string, indexChange: 1 | -1) {
