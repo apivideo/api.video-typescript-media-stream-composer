@@ -46,6 +46,11 @@ export interface StreamDetails {
     displaySettings: StreamDisplaySettings;
     stream: MediaStream;
 }
+export interface AudioSourceDetails {
+    id: string;
+    stream: MediaStream;
+}
+declare type EventType = "error" | "recordingStopped";
 interface DrawingSettings {
     color: string;
     lineWidth: number;
@@ -60,18 +65,25 @@ export declare class MediaStreamComposer {
     private recorder?;
     private canvas?;
     private streams;
+    private audioSources;
     private mouseTool;
     private isDrawing;
+    private eventTarget;
     private drawingSettings;
     private drawings;
     constructor(options: Partial<Options>);
     startRecording(options: RecordingOptions): void;
+    addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;
     stopRecording(): Promise<VideoUploadResponse>;
     updateStream(streamId: string, options: StreamOptions): void;
     appendCanvasTo(containerQuerySelector: string): void;
     removeStream(id: string): void;
+    addAudioSource(mediaStream: MediaStream): string;
+    removeAudioSource(id: string): void;
     addStream(mediaStream: MediaStream, options: StreamOptions): string;
     getCanvas(): HTMLCanvasElement | undefined;
+    getAudioSources(): AudioSourceDetails[];
+    getAudioSource(id: string): AudioSourceDetails;
     getStreams(): StreamDetails[];
     getStream(id: string): StreamDetails;
     moveUp(streamId: string): void;
@@ -79,6 +91,7 @@ export declare class MediaStreamComposer {
     setMouseTool(tool: MouseTool): void;
     setDrawingSettings(settings: Partial<DrawingSettings>): void;
     clearDrawing(): void;
+    private dispatch;
     private updateIndex;
     private drawStream;
     private validateOptions;

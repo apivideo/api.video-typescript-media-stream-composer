@@ -1,8 +1,6 @@
 import { expect } from 'chai';
 import mock from 'xhr-mock';
 import { MediaStreamComposer } from '../src/index';
-// tslint:disable:no-var-requires
-require("web-audio-mock");
 
 describe('Instanciation', () => {
     it('throws if required param is missing', () => {

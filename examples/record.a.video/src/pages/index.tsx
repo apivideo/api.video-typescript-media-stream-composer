@@ -7,9 +7,9 @@ import GestureIcon from '@mui/icons-material/Gesture'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
 import StopRecordingIcon from '@mui/icons-material/StopCircle'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import VisibilityOnIcon from '@mui/icons-material/Visibility';
-import { FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import VisibilityOnIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -18,11 +18,11 @@ import {
 } from 'material-ui-popup-state/hooks'
 import type { NextPage } from 'next'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import { CirclePicker } from 'react-color'
 import styles from '../../styles/Home.module.css'
 import StreamDialog, { StreamFormValues } from '../components/StreamDialog'
-import { useRouter } from 'next/router'
 
 const theme = createTheme({
   palette: {
@@ -38,10 +38,7 @@ const theme = createTheme({
       dark: '#ba000d',
       contrastText: '#000',
     },
-    success: {
-      main: '#0b0f17',
-      dark: '#414f6e',
-    }
+
   },
 });
 
@@ -54,9 +51,8 @@ const composer = (() => {
     resolution: {
       width: WIDTH,
       height: HEIGHT
-    }
+    },
   });
-
   mediaStreamComposer.setMouseTool("move-resize");
   mediaStreamComposer.setDrawingSettings({
     color: "#ff0000",
@@ -75,16 +71,22 @@ const Home: NextPage = () => {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [playerUrl, setPlayerUrl] = useState<string | null>(null);
   const [mouseTool, setMouseTool] = useState<MouseTool>("move-resize");
-  const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
+  const [videoDevices, setVideoDevices] = useState<InputDeviceInfo[]>([]);
+  const [audioDevices, setAudioDevices] = useState<InputDeviceInfo[]>([]);
   const [uploadToken, setUploadToken] = useState<string>(DEFAULT_UPLOAD_TOKEN);
 
   const [drawingColor, setDrawingColor] = useState("#ff6900");
   const [drawingAutoEraseDelay, setDrawingAutoEraseDelay] = useState(0);
 
+  const [firstStreamAddedAlertOpen, setFirstStreamAddedAlertOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [audioSource, setAudioSource] = useState<string>("none");
+  const [audioStreamId, setAudioStreamId] = useState<string | undefined>();
+
   const router = useRouter()
 
   useEffect(() => {
-    if(router.query.uploadToken) {
+    if (router.query.uploadToken) {
       setUploadToken(router.query.uploadToken as string);
     }
   }, [router.query])
@@ -121,8 +123,8 @@ const Home: NextPage = () => {
       .then((stream) => {
         navigator.mediaDevices.enumerateDevices()
           .then((devices) => {
-            const videoDevices = devices.filter(d => d.kind === "videoinput");
-            setDevices(videoDevices);
+            setVideoDevices(devices.filter(d => d.kind === "videoinput"));
+            setAudioDevices(devices.filter(d => d.kind === "audioinput"));
             stream.getTracks().forEach(x => x.stop());
           })
       })
@@ -138,20 +140,19 @@ const Home: NextPage = () => {
         : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
 
     setTimeout(() => {
-      if (composer) {
-        composer.addStream(stream, {
-          position: opts.position,
-          width: opts.width ? parseInt(opts.width, 10) * WIDTH / 100 : undefined,
-          height: opts.height ? parseInt(opts.height, 10) * HEIGHT / 100 : undefined,
-          x: opts.left ? parseInt(opts.left, 10) * WIDTH / 100 : undefined,
-          y: opts.top ? parseInt(opts.top, 10) * HEIGHT / 100 : undefined,
-          resizable: opts.resizable,
-          draggable: opts.draggable,
-          opacity: opts.opacity,
-          mask: opts.mask,
-          name: `#${composer.getStreams().length} ${opts.type}`,
-        });
-      }
+      composer.addStream(stream, {
+        position: opts.position,
+        width: opts.width ? parseInt(opts.width, 10) * WIDTH / 100 : undefined,
+        height: opts.height ? parseInt(opts.height, 10) * HEIGHT / 100 : undefined,
+        x: opts.left ? parseInt(opts.left, 10) * WIDTH / 100 : undefined,
+        y: opts.top ? parseInt(opts.top, 10) * HEIGHT / 100 : undefined,
+        resizable: opts.resizable,
+        draggable: opts.draggable,
+        opacity: opts.opacity,
+        mask: opts.mask,
+        mute: true,
+        name: `#${composer.getStreams().length} ${opts.type}`,
+      });
       composer.appendCanvasTo("#canvas-container");
       const canvas = composer.getCanvas();
       canvas!.style.width = "100%";
@@ -174,13 +175,31 @@ const Home: NextPage = () => {
         <div>
           <p>This Next.js application aims to show the features offered by the <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer">@api.video/media-stream-composer</a> library. </p>
           <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">record.a.video</a>.</p>
-
+          <Snackbar
+            open={firstStreamAddedAlertOpen}
+            onClose={() => setFirstStreamAddedAlertOpen(false)}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setFirstStreamAddedAlertOpen(false)} severity="success" sx={{ width: '100%' }}>
+              You have added your first stream. You can now add more to create your composition!
+            </Alert>
+          </Snackbar>
+          <Snackbar
+            open={!!errorMessage}
+            onClose={() => setErrorMessage(undefined)}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setErrorMessage(undefined)} severity="error" sx={{ width: '100%' }}>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
         </div>
         <div className={styles.columnsContainer}>
           <Paper className={styles.settingsPaper} elevation={4}>
             <h2>
-              <p>Streams</p>
-
+              <p>Video streams</p>
               <PopupState variant="popover" popupId="addStreamMenu">
                 {(popupState) => (
                   <React.Fragment>
@@ -188,7 +207,7 @@ const Home: NextPage = () => {
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
 
-                      {devices.map(d =>
+                      {videoDevices.map(d =>
                         <MenuItem key={d.deviceId} onClick={async () => {
                           popupState.close();
                           addStream({
@@ -219,7 +238,6 @@ const Home: NextPage = () => {
                   </React.Fragment>
                 )}
               </PopupState>
-
             </h2>
 
             {streams.length === 0
@@ -244,9 +262,9 @@ const Home: NextPage = () => {
                         <TableCell className={styles.tableActions} align="right">
                           <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
                           <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
-                          { stream.displaySettings.hidden
-                            ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false}); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
-                            : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true}); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
+                          {stream.displaySettings.hidden
+                            ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false }); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
+                            : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true }); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
 
                           <Button onClick={() => { composer.removeStream(stream.id); setStreams(composer.getStreams()); }}><DeleteIcon></DeleteIcon></Button>
                         </TableCell>
@@ -258,6 +276,32 @@ const Home: NextPage = () => {
               </TableContainer>
             }
 
+            <h2>Audio source</h2>
+            <FormControl fullWidth>
+              <InputLabel id="audio-source-select-label">Audio source</InputLabel>
+              <Select
+                labelId="audio-source-select-label"
+                id="audio-source-select"
+                value={audioSource}
+                label="Audio source"
+                onChange={async (a) => {
+                  if (audioStreamId) {
+                    composer.removeAudioSource(audioStreamId);
+                  }
+                  const selectedAudioSource = a.target.value;
+                  let newAudioStreamId;
+                  if (selectedAudioSource !== "none") {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: selectedAudioSource } });
+                    newAudioStreamId = await composer.addAudioSource(stream);
+                  }                  
+                  setAudioStreamId(newAudioStreamId);
+                  setAudioSource(selectedAudioSource);
+                }}
+              >
+                <MenuItem key={"undefined"} value={"none"}>none</MenuItem>
+                {audioDevices.map(d => <MenuItem key={d.deviceId} value={d.deviceId}>{d.label}</MenuItem>)}
+              </Select>
+            </FormControl>
 
             <h2>Tool</h2>
             <FormControl component="fieldset">
@@ -311,7 +355,19 @@ const Home: NextPage = () => {
 
             <Button disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
               if (!isRecording) {
-                composer.startRecording({ uploadToken });
+                composer.startRecording({
+                  uploadToken,
+                  origin: {
+                    application: {
+                      name: "record-a-video",
+                      version: "1.0.0",
+                    }
+                  }
+                });
+                composer.addEventListener("error", (e) => {
+                  setErrorMessage((e as any).data.title || "An unknown error occurred");
+                  setIsRecording(false);
+                });
                 setPlayerUrl(null);
                 setIsRecording(true);
               } else {
@@ -326,14 +382,14 @@ const Home: NextPage = () => {
           </Paper>
 
 
-          <Paper elevation={4} className={styles.previewPaper} style={{flex: 1}}>
+          <Paper elevation={4} className={styles.previewPaper} style={{ flex: 1 }}>
             <h2>Preview</h2>
-            <div id="canvas-container" style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}`}} />
+            <div id="canvas-container" style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}` }} />
           </Paper>
 
           <StreamDialog
             open={addStreamDialogIsOpen}
-            devices={devices}
+            devices={videoDevices}
             onClose={() => setAddStreamDialogOpen(false)}
             onSubmit={(values) => {
               addStream(values);
