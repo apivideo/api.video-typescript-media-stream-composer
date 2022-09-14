@@ -102,6 +102,7 @@ export class MediaStreamComposer {
         autoEraseDelay: 0,
     }
     private drawings: ({ coords: [number, number][], startTime: number, } & DrawingSettings)[] = [];
+    private lastStreamId = 0;
 
     constructor(options: Partial<Options>) {
         this.eventTarget = new EventTarget();
@@ -188,7 +189,7 @@ export class MediaStreamComposer {
         if (!this.merger) {
             this.init();
         }
-        const streamId = "audio_" + Object.keys(this.streams).length.toString();
+        const streamId = "audio_" + this.lastStreamId++;
 
         this.audioSources[streamId] = {
             id: streamId,
@@ -216,7 +217,7 @@ export class MediaStreamComposer {
         if (!this.merger) {
             this.init();
         }
-        const streamId = "video_" + Object.keys(this.streams).length.toString();
+        const streamId = "video_" + this.lastStreamId++;
 
         options = this.validateOptions(options);
 

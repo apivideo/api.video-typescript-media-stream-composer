@@ -82,12 +82,11 @@ export default class MouseEventListener {
             });
         };
 
-        canvas.addEventListener("mouseup", (e) => this.mouseUp());
+        window.addEventListener("mouseup", (e) => this.mouseUp());
         canvas.addEventListener("mousedown", (e) => this.mouseDown(fromMouseEvent(e)));
         canvas.addEventListener("mousemove", (e) => this.mouseMove(fromMouseEvent(e)));
-        canvas.addEventListener("mouseleave", (e) => this.mouseUp());
 
-        canvas.addEventListener("touchend", (e) => this.mouseUp());
+        window.addEventListener("touchend", (e) => this.mouseUp());
         canvas.addEventListener("touchstart", (e) => fromTouchEvent(e, (a) => {
             this.mouseMove(a);
             this.mouseDown(a);
@@ -108,6 +107,7 @@ export default class MouseEventListener {
     }
 
     public onMove(listener: (e: MoveEvent) => void) {
+
         this.onMoveListeners.push(listener);
     }
 
@@ -126,6 +126,7 @@ export default class MouseEventListener {
         this.dragStart = undefined;
     }
     private mouseDown(mouseCoordinates: Coordinates) {
+        
         if (this.overStream) {
             this.dragStart = {
                 ...this.overStream,
