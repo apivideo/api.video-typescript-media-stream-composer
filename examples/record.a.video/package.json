@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@api.video/media-stream-composer": "^0.1.4",
+    "@api.video/media-stream-composer": "^0.1.5",
     "@mui/icons-material": "^5.8.4",
     "material-ui-popup-state": "^3.1.1",
     "next": "12.1.6",

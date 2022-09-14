@@ -151,7 +151,7 @@ const Home: NextPage = () => {
         opacity: opts.opacity,
         mask: opts.mask,
         mute: true,
-        name: `#${composer.getStreams().length} ${opts.type}`,
+        name: `${opts.type}`,
       });
       composer.appendCanvasTo("#canvas-container");
       const canvas = composer.getCanvas();
@@ -208,6 +208,28 @@ const Home: NextPage = () => {
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
 
                       {videoDevices.map(d =>
+                        ([
+                        <MenuItem key={d.deviceId + "_screen"} onClick={async () => {
+                          popupState.close();
+                          addStream({
+                            type: "screen",
+                            position: "contain",
+                            mask: "none",
+                            draggable: false,
+                            resizable: false,
+                          });
+                          addStream({
+                            type: "webcam",
+                            deviceId: d.deviceId,
+                            position: "fixed",
+                            height: "30%",
+                            top: "68%",
+                            left: "2%",
+                            mask: "circle",
+                            draggable: true,
+                            resizable: true,
+                          });
+                        }}>Add screencast + rounded webcam ({d.label})</MenuItem>,
                         <MenuItem key={d.deviceId} onClick={async () => {
                           popupState.close();
                           addStream({
@@ -221,7 +243,7 @@ const Home: NextPage = () => {
                             draggable: true,
                             resizable: true,
                           });
-                        }}>Add rounded webcam in corner ({d.label})</MenuItem>)
+                        }}>Add rounded webcam only ({d.label})</MenuItem>,]))
                       }
 
                       <MenuItem onClick={async () => {
@@ -233,7 +255,8 @@ const Home: NextPage = () => {
                           draggable: false,
                           resizable: false,
                         });
-                      }}>Add screencast in full-size</MenuItem>
+                      }}>Add screencast only</MenuItem>
+
                     </Menu>
                   </React.Fragment>
                 )}
@@ -246,7 +269,7 @@ const Home: NextPage = () => {
                 <Table size="small" aria-label="simple table">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Stream name</TableCell>
+                      <TableCell>Streams</TableCell>
                       <TableCell align="right"></TableCell>
                     </TableRow>
                   </TableHead>
@@ -257,7 +280,7 @@ const Home: NextPage = () => {
                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                       >
                         <TableCell component="th" scope="row">
-                          {stream.options.name}
+                         #{stream.id} ({stream.options.name})
                         </TableCell>
                         <TableCell className={styles.tableActions} align="right">
                           <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
@@ -293,7 +316,7 @@ const Home: NextPage = () => {
                   if (selectedAudioSource !== "none") {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: selectedAudioSource } });
                     newAudioStreamId = await composer.addAudioSource(stream);
-                  }                  
+                  }
                   setAudioStreamId(newAudioStreamId);
                   setAudioSource(selectedAudioSource);
                 }}
