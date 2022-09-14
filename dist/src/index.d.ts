@@ -71,6 +71,7 @@ export declare class MediaStreamComposer {
     private eventTarget;
     private drawingSettings;
     private drawings;
+    private lastStreamId;
     constructor(options: Partial<Options>);
     startRecording(options: RecordingOptions): void;
     addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;
