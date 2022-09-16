@@ -221,6 +221,12 @@ export class MediaStreamComposer {
 
         options = this.validateOptions(options);
 
+
+        const video = document.createElement('video');
+        video.srcObject = mediaStream;
+
+        video.onresize = (_) => this.updateStream(streamId, options);
+
         const displaySettings = this.buildStreamDisplaySettings(streamId, mediaStream, options);
         this.streams[streamId] = {
             id: streamId,
@@ -490,6 +496,7 @@ export class MediaStreamComposer {
 
     private buildStreamDisplaySettings(id: string, mediaStream: MediaStream, options: StreamOptions): StreamDisplaySettings {
         const trackSettings = mediaStream.getVideoTracks()[0].getSettings();
+
         const streamResolution = { width: trackSettings.width!, height: trackSettings.height! };
         const containerResolution = this.options.resolution;
 

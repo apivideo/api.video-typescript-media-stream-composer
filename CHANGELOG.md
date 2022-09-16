@@ -1,5 +1,9 @@
 # Changelog
 All changes to this project will be documented in this file.
+
+## [0.1.6] - 2022-09-16
+- Fix screencast stream size ratio issue
+
 ## [0.1.5] - 2022-09-14
 - Fix stream id generation
 - Fix mouse events when occuring outside the canvas
