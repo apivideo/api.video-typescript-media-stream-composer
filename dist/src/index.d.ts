@@ -72,8 +72,11 @@ export declare class MediaStreamComposer {
     private drawingSettings;
     private drawings;
     private lastStreamId;
+    private drawingsCleanerInterval?;
     constructor(options: Partial<Options>);
     startRecording(options: RecordingOptions): void;
+    destroy(): void;
+    private destroyIfNeeded;
     addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;
     stopRecording(): Promise<VideoUploadResponse>;
     updateStream(streamId: string, options: StreamOptions): void;

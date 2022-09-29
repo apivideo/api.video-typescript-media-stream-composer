@@ -44,6 +44,7 @@
     - [`setDrawingSettings(settings: Partial<DrawingSettings>): void`](#setdrawingsettingssettings-partialdrawingsettings-void)
     - [`clearDrawing(): void`](#cleardrawing-void)
     - [`addEventListener(event: string, listener: Function)`](#addeventlistenerevent-string-listener-function)
+    - [`destroy()`](#destroy)
 - [Full examples](#full-examples)
   - ["Loom-like"](#loom-like)
 
@@ -486,7 +487,9 @@ Define an event listener for the media recorder. The following events are availa
     });
 ```
 
+### `destroy()`
 
+Destroys all streams and releases all resources in use.
 
 # Full examples 
 
