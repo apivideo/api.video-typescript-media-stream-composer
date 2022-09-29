@@ -1,6 +1,10 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.1.7] - 2022-09-29
+- add destroy() method
+- automatically remove expired drawing from drawings array
+
 ## [0.1.6] - 2022-09-16
 - Fix screencast stream size ratio issue
 

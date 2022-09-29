@@ -103,6 +103,7 @@ export class MediaStreamComposer {
     }
     private drawings: ({ coords: [number, number][], startTime: number, } & DrawingSettings)[] = [];
     private lastStreamId = 0;
+    private drawingsCleanerInterval?: any;
 
     constructor(options: Partial<Options>) {
         this.eventTarget = new EventTarget();
@@ -129,6 +130,26 @@ export class MediaStreamComposer {
         this.recorder.addEventListener("error", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("error"), { data: (e as any).data })));
         this.recorder.addEventListener("recordingStopped", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("recordingStopped"), { data: (e as any).data })));
         this.recorder.start();
+    }
+
+    public destroy() {
+        Object.keys(this.streams).forEach(streamId => this.removeStream(streamId));
+        Object.keys(this.audioSources).forEach(streamId => this.removeStream(streamId));
+        this.merger?.removeStream("drawing");
+        this.clearDrawing();
+        this.merger?.destroy();
+        if (this.drawingsCleanerInterval) {
+            clearInterval(this.drawingsCleanerInterval);
+            this.drawingsCleanerInterval = undefined;
+        }
+        this.canvas?.parentElement?.removeChild(this.canvas);
+        this.merger = undefined;
+    }
+
+    private destroyIfNeeded() {
+        if (this.drawings.length === 0 && Object.keys(this.audioSources).length === 0 && Object.keys(this.streams).length === 0) {
+            this.destroy();
+        }
     }
 
     public addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
@@ -181,6 +202,7 @@ export class MediaStreamComposer {
         if (stream) {
             this.merger?.removeStream(stream.stream);
             delete this.streams[id];
+            stream.stream.getTracks().forEach(x => x.stop());
         }
         this.cleanIndexes();
     }
@@ -210,6 +232,7 @@ export class MediaStreamComposer {
         if (audioSource) {
             this.merger?.removeStream(audioSource.stream);
             delete this.audioSources[id];
+            audioSource.stream.getTracks().forEach(x => x.stop());
         }
     }
 
@@ -652,6 +675,14 @@ export class MediaStreamComposer {
 
             this.result = this.merger.result;
             this.createDrawingStream(this.merger);
+
+            const d = this;
+
+            this.drawingsCleanerInterval = setInterval(() => {
+                const currentTime = new Date().getTime();
+                d.drawings = d.drawings.filter((drawing) => drawing.autoEraseDelay === 0 || (currentTime - drawing.startTime) / 1000 <= drawing.autoEraseDelay);
+                d.destroyIfNeeded();
+            }, 1000);
 
             const mouseEventListener = new MouseEventListener(this.canvas!, this.streams);
             mouseEventListener.onClick((e) => e.stream?.options.onClick && e.stream.options.onClick(e.stream.id, { x: e.x, y: e.y }));
