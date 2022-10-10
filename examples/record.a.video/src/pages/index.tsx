@@ -9,7 +9,7 @@ import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp
 import StopRecordingIcon from '@mui/icons-material/StopCircle'
 import VisibilityOnIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -74,6 +74,7 @@ const Home: NextPage = () => {
   const [videoDevices, setVideoDevices] = useState<InputDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<InputDeviceInfo[]>([]);
   const [uploadToken, setUploadToken] = useState<string>(DEFAULT_UPLOAD_TOKEN);
+  const [videoName, setVideoName] = useState<string>('')
 
   const [drawingColor, setDrawingColor] = useState("#ff6900");
   const [drawingAutoEraseDelay, setDrawingAutoEraseDelay] = useState(0);
@@ -198,6 +199,11 @@ const Home: NextPage = () => {
         </div>
         <div className={styles.columnsContainer}>
           <Paper className={styles.settingsPaper} elevation={4}>
+            <div>
+              <h2>Video name</h2>
+              <TextField label="Video name" value={videoName} onChange={e => setVideoName(e.currentTarget.value)} />
+            </div>
+
             <h2>
               <p>Video streams</p>
               <PopupState variant="popover" popupId="addStreamMenu">
@@ -380,6 +386,7 @@ const Home: NextPage = () => {
               if (!isRecording) {
                 composer.startRecording({
                   uploadToken,
+                  videoName,
                   origin: {
                     application: {
                       name: "record-a-video",

@@ -39,7 +39,7 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
-    "@api.video/media-recorder": "^1.0.6",
+    "@api.video/media-recorder": "^1.0.7",
     "core-js": "^3.23.4",
     "video-stream-merger": "^4.0.1"
   },
