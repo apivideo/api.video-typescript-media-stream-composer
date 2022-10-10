@@ -42,5 +42,8 @@
     "@api.video/media-recorder": "^1.0.6",
     "core-js": "^3.23.4",
     "video-stream-merger": "^4.0.1"
+  },
+  "engines" : { 
+    "node" : ">=15.0.0"
   }
 }
