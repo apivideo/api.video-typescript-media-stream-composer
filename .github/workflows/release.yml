@@ -7,9 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           registry-url: 'https://registry.npmjs.org'
+          node-version: 16
       - run: npm install --no-save
       - run: npm publish --access=public
         env:
