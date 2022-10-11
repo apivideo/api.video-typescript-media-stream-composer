@@ -19,6 +19,7 @@
   "scripts": {
     "tslint": "tslint --project .",
     "build": "webpack --mode production",
+    "prepublishOnly": "npm run build",
     "test": "npm run build && mocha -r ts-node/register -r jsdom-global/register 'test/**/*.ts'"
   },
   "devDependencies": {
