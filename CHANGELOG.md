@@ -1,5 +1,7 @@
 # Changelog
 All changes to this project will be documented in this file.
+## [0.1.8] - 2022-10-11
+- Allow user to customize video name
 
 ## [0.1.7] - 2022-09-29
 - add destroy() method

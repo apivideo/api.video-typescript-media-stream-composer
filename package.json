@@ -1,6 +1,6 @@
 {
   "name": "@api.video/media-stream-composer",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "api.video media stream composer",
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "scripts": {
     "tslint": "tslint --project .",
     "build": "webpack --mode production",
+    "prepublishOnly": "npm run build",
     "test": "npm run build && mocha -r ts-node/register -r jsdom-global/register 'test/**/*.ts'"
   },
   "devDependencies": {
