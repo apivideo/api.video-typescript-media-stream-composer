@@ -376,10 +376,11 @@ Using delegated upload tokens for authentication is best options when uploading 
 
 ##### Common options
 
-| Option name | Mandatory | Type   | Description                                           |
-| ----------: | --------- | ------ | ----------------------------------------------------- |
-|     apiHost | no        | string | api.video host (default: ws.api.video)                |
-|     retries | no        | number | number of retries when an API call fails (default: 5) |
+| Option name | Mandatory | Type   | Description                                                         |
+| ----------: | --------- | ------ | ------------------------------------------------------------------- |
+|   videoName | no        | string | the name of your recorded video (overrides the default "file" name) |
+|     apiHost | no        | string | api.video host (default: ws.api.video)                              |
+|     retries | no        | number | number of retries when an API call fails (default: 5)               |
 
 
 **Example**
