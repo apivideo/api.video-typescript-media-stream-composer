@@ -20,7 +20,7 @@
   - [Instantiation](#instantiation)
     - [Options](#options)
   - [Methods](#methods)
-    - [`addStream(mediaStream: MediaStream, options: StreamOptions): string`](#addstreammediastream-mediastream-options-streamoptions-string)
+    - [`addStream(mediaStream: MediaStream | HTMLImageElement, options: StreamOptions): string`](#addstreammediastream-mediastream--htmlimageelement-options-streamoptions-string)
       - [Options](#options-1)
     - [`updateStream(streamId: string, options: StreamOptions): void`](#updatestreamstreamid-string-options-streamoptions-void)
     - [`removeStream(id: string): void`](#removestreamid-string-void)
@@ -142,9 +142,11 @@ If the `resolution` option is not provided, the canvas will be created with this
 ## Methods
 
 
-### `addStream(mediaStream: MediaStream, options: StreamOptions): string`
+### `addStream(mediaStream: MediaStream | HTMLImageElement, options: StreamOptions): string`
 
-The addStream() method adds a stream to the composition. It takes a `MediaStream` and an `StreamOptions` parameter.
+The addStream() method adds a stream to the composition. A stream can be either a `MediaStream` (for example, the webcam, the screen, or a window capture) or an `HTMLImageElement` (for example, a logo).
+
+It takes a `MediaStream | HTMLImageElement` and an `StreamOptions` parameter.
 
 #### Options
 

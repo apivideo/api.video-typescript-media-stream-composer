@@ -6,10 +6,11 @@ import StartRecordingIcon from '@mui/icons-material/FiberManualRecord'
 import GestureIcon from '@mui/icons-material/Gesture'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
+import SettingsIcon from '@mui/icons-material/Settings'
 import StopRecordingIcon from '@mui/icons-material/StopCircle'
 import VisibilityOnIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -23,6 +24,7 @@ import React, { useEffect, useState } from 'react'
 import { CirclePicker } from 'react-color'
 import styles from '../../styles/Home.module.css'
 import StreamDialog, { StreamFormValues } from '../components/StreamDialog'
+import UploadSettingsDialog, { UploadSettings } from '../components/UploadSettingsDialog'
 
 const theme = createTheme({
   palette: {
@@ -63,8 +65,10 @@ const composer = (() => {
 })();
 
 
+
 const Home: NextPage = () => {
   const [addStreamDialogIsOpen, setAddStreamDialogOpen] = useState(false);
+  const [uploadSettingsDialogIsOpen, setUploadSettingsDialogOpen] = useState(false);
 
   const [streams, setStreams] = useState<StreamDetails[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -83,10 +87,14 @@ const Home: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [audioSource, setAudioSource] = useState<string>("none");
   const [audioStreamId, setAudioStreamId] = useState<string | undefined>();
+  const [uploadSettings, setUploadSettings] = useState<UploadSettings>({
+    videoName: "My record.a.video composition",
+  });
 
   const router = useRouter()
 
   useEffect(() => {
+    (window as any).composer = composer;
     if (router.query.uploadToken) {
       setUploadToken(router.query.uploadToken as string);
     }
@@ -135,10 +143,23 @@ const Home: NextPage = () => {
 
   const addStream = async (opts: StreamFormValues) => {
     setAddStreamDialogOpen(false);
-    const stream =
-      opts.type === "webcam"
+    let stream: MediaStream | HTMLImageElement; 
+    switch(opts.type) {
+      case "screen":
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        break;
+      case "webcam":
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { deviceId: opts.deviceId } })
+        break;
+      case "image":
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.src = opts.imageUrl!;
+        stream = image;
+    }
+      /*opts.type === "webcam"
         ? await navigator.mediaDevices.getUserMedia({ audio: true, video: { deviceId: opts.deviceId } })
-        : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });*/
 
     setTimeout(() => {
       composer.addStream(stream, {
@@ -199,11 +220,6 @@ const Home: NextPage = () => {
         </div>
         <div className={styles.columnsContainer}>
           <Paper className={styles.settingsPaper} elevation={4}>
-            <div>
-              <h2>Video name</h2>
-              <TextField label="Video name" value={videoName} onChange={e => setVideoName(e.currentTarget.value)} />
-            </div>
-
             <h2>
               <p>Video streams</p>
               <PopupState variant="popover" popupId="addStreamMenu">
@@ -212,17 +228,31 @@ const Home: NextPage = () => {
                     <Button variant="text" {...bindTrigger(popupState)}><AddCircleIcon sx={{ mr: 1 }} /> add a stream</Button>
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
+                      <MenuItem onClick={async () => {
+                          popupState.close();
+                          addStream({
+                            type: "image",
+                            imageUrl: "/Logo_white_text.svg",
+                            position: "fixed",
+                            width: "38%",
+                            top: "88%",
+                            left: "60%",
+                            mask: "none",
+                            draggable: true,
+                            resizable: true,
+                          });
+                        }}>Add api.video logo :)</MenuItem>
 
                       {videoDevices.map(d =>
-                        ([
+                      ([
                         <MenuItem key={d.deviceId + "_screen"} onClick={async () => {
                           popupState.close();
                           addStream({
                             type: "screen",
                             position: "contain",
                             mask: "none",
-                            draggable: false,
-                            resizable: false,
+                            draggable: true,
+                            resizable: true,
                           });
                           addStream({
                             type: "webcam",
@@ -280,18 +310,18 @@ const Home: NextPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {streams.sort((s1, s2) => s2.displaySettings.index - s1.displaySettings.index).map((stream, i) => (
+                    {streams.map((val, index, array) => array[array.length - 1 - index]).map((stream, i) => (
                       <TableRow
                         key={i}
                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                       >
                         <TableCell component="th" scope="row">
-                         #{stream.id} ({stream.options.name})
+                          #{stream.id} ({stream.options.name} {stream.options.index})
                         </TableCell>
                         <TableCell className={styles.tableActions} align="right">
                           <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
                           <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
-                          {stream.displaySettings.hidden
+                          {stream.options.hidden
                             ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false }); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
                             : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true }); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
 
@@ -380,13 +410,15 @@ const Home: NextPage = () => {
             </FormControl>
 
 
-            <h2>Progressive upload</h2>
+            <h2>Progressive upload <Button
+              onClick={() => setUploadSettingsDialogOpen(true)}
+            ><SettingsIcon /></Button></h2>
 
-            <Button disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
+            <Button disabled={streams.length === -1} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
               if (!isRecording) {
                 composer.startRecording({
                   uploadToken,
-                  videoName,
+                  videoName: uploadSettings.videoName,
                   origin: {
                     application: {
                       name: "record-a-video",
@@ -425,6 +457,13 @@ const Home: NextPage = () => {
               addStream(values);
               setAddStreamDialogOpen(false);
             }} />
+
+          <UploadSettingsDialog
+            open={uploadSettingsDialogIsOpen}
+            onClose={() => setUploadSettingsDialogOpen(false)}
+            uploadSettings={uploadSettings}
+            onSubmit={(values) => { setUploadSettings(values); setUploadSettingsDialogOpen(false) }} />
+          
         </div>
       </ThemeProvider>
     </div>

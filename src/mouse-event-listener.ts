@@ -1,17 +1,17 @@
-import { StreamDetails } from ".";
+import { Stream } from "./stream/stream";
 
 type StreamMouseLocation = "inside" | "circle" | "top" | "bottom" | "left" | "right";
 
 export interface ClickEvent {
     x: number;
     y: number;
-    stream?: StreamDetails;
+    stream?: Stream;
 }
 
 export interface MoveEvent {
     x: number;
     y: number;
-    stream?: StreamDetails;
+    stream?: Stream;
     locations?: StreamMouseLocation[];
 };
 
@@ -21,7 +21,7 @@ export interface DragEvent {
     dragStart: DragStart
 };
 
-interface DragStart {
+export interface DragStart {
     x: number;
     y: number;
     circleRadius?: number;
@@ -29,12 +29,12 @@ interface DragStart {
     streamHeight?: number;
     offsetX?: number;
     offsetY?: number;
-    stream?: StreamDetails;
+    stream?: Stream;
     locations?: StreamMouseLocation[];
 };
 
 type OverStream = {
-    stream: StreamDetails;
+    stream: Stream;
     locations: StreamMouseLocation[];
 };
 
@@ -44,7 +44,7 @@ interface Coordinates {
 }
 
 export default class MouseEventListener {
-    private streams: { [id: string]: StreamDetails };
+    private streams: Stream[];
     private onClickListeners: ((e: ClickEvent) => void)[] = [];
     private onDragListeners: ((e: DragEvent) => void)[] = [];
     private onDragEndListeners: (() => void)[] = [];
@@ -52,7 +52,7 @@ export default class MouseEventListener {
     private dragStart?: DragStart & { hasMoved: boolean };
     private overStream?: OverStream;
 
-    constructor(canvas: HTMLCanvasElement, streams: { [id: string]: StreamDetails }) {
+    constructor(canvas: HTMLCanvasElement, streams:Stream[]) {
         this.streams = streams;
 
         const getDimensionsRatio = () => {
@@ -125,16 +125,19 @@ export default class MouseEventListener {
         }
         this.dragStart = undefined;
     }
+
     private mouseDown(mouseCoordinates: Coordinates) {
-        
         if (this.overStream) {
+            const { displaySettings, options } = this.overStream.stream.getStreamDetails();
+            if(!displaySettings) return;
+        
             this.dragStart = {
                 ...this.overStream,
-                offsetX: mouseCoordinates.x - this.overStream.stream.displaySettings.position.x,
-                offsetY: mouseCoordinates.y - this.overStream.stream.displaySettings.position.y,
-                ...(this.overStream.stream.options.mask === "circle" ? { circleRadius: this.overStream.stream.displaySettings.radius } : {}),
-                streamWidth: this.overStream.stream.displaySettings.displayResolution.width,
-                streamHeight: this.overStream.stream.displaySettings.displayResolution.height,
+                offsetX: mouseCoordinates.x - displaySettings.position.x,
+                offsetY: mouseCoordinates.y - displaySettings.position.y,
+                ...(options.mask === "circle" ? { circleRadius: displaySettings.radius } : {}),
+                streamWidth: displaySettings.displayResolution.width,
+                streamHeight: displaySettings.displayResolution.height,
                 x: mouseCoordinates.x,
                 y: mouseCoordinates.y,
                 hasMoved: false,
@@ -155,14 +158,18 @@ export default class MouseEventListener {
             }));
             this.dragStart.hasMoved = true;
         } else {
-            const streamIds = Object.keys(this.streams);
             let index = 0;
             let overStream: OverStream | undefined;
 
-
-            for (const streamId of streamIds) {
+            let currentStreamIndex = 0;
+            for (const stream of this.streams) {
+                if(!stream.hasDisplay()) continue;
                 const locations: StreamMouseLocation[] = [];
-                const stream = this.streams[streamId];
+                const streamDetails = stream.getStreamDetails();
+                const displaySettings = streamDetails.displaySettings!;
+                //const stream = this.streams.find(s => s.id === streamId);
+
+                currentStreamIndex++;
 
                 if (!stream) {
                     continue;
@@ -172,16 +179,16 @@ export default class MouseEventListener {
                     y,
                     width,
                     height
-                } = { ...stream.displaySettings.displayResolution, ...stream.displaySettings.position };
+                } = { ...displaySettings.displayResolution, ...displaySettings.position };
 
-                if (stream.options.mask === "circle") {
-                    const centerX = x + stream.displaySettings.radius!;
-                    const centerY = y + stream.displaySettings.radius!;
+                if (streamDetails.options.mask === "circle") {
+                    const centerX = x + displaySettings.radius!;
+                    const centerY = y + displaySettings.radius!;
                     const distance = Math.sqrt(Math.pow(centerX - mouseCoordinates.x, 2) + Math.pow(centerY - mouseCoordinates.y, 2));
-                    if (distance <= stream.displaySettings.radius!) {
+                    if (distance <= displaySettings.radius!) {
                         locations.push("inside");
                     }
-                    if (distance <= stream.displaySettings.radius! + 10 && distance > stream.displaySettings.radius! - 10) {
+                    if (distance <= displaySettings.radius! + 10 && distance > displaySettings.radius! - 10) {
                         locations.push("circle");
                     }
                 } else {
@@ -194,8 +201,8 @@ export default class MouseEventListener {
                     if (mouseCoordinates.y > y && mouseCoordinates.y < y + height && mouseCoordinates.x > x + width - 10 && mouseCoordinates.x < x + width + 10) locations.push("right");
                 }
 
-                if (locations.length > 0 && stream.displaySettings.index! > index) {
-                    index = stream.displaySettings.index!;
+                if (locations.length > 0 && currentStreamIndex > index) {
+                    index = currentStreamIndex;
                     overStream = {
                         stream,
                         locations

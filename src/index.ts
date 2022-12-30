@@ -1,64 +1,14 @@
-import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadError, VideoUploadResponse } from "@api.video/media-recorder";
-import { AddStreamOptions, VideoStreamMerger } from "video-stream-merger";
+import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadResponse } from "@api.video/media-recorder";
+import { DrawingLayer, DrawingSettings } from "./drawing-layer";
 import MouseEventListener, { DragEvent, MoveEvent } from "./mouse-event-listener";
+import { Resolution } from "./stream-position";
+import { Stream, StreamDetails, StreamUserOptions } from "./stream/stream";
+
+export { StreamDetails };
 
 export interface Options {
     resolution: Resolution;
 };
-
-export type StreamPosition = "contain" | "cover" | "fixed";
-export type StreamMask = "none" | "circle";
-
-export interface StreamOptions {
-    name?: string;
-    position?: StreamPosition;
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    draggable?: boolean;
-    resizable?: boolean;
-    mask?: StreamMask;
-    index?: number;
-    mute?: boolean;
-    hidden?: boolean;
-    opacity?: number;
-    onClick?: (streamId: string, event: { x: number, y: number }) => void;
-}
-
-
-interface StreamDisplaySettings {
-    displayResolution: Resolution,
-    streamResolution: Resolution,
-    position: Position,
-    radius?: number;
-    index: number;
-    hidden: boolean;
-    opacity: number;
-}
-
-interface DimensionsCalculationResult {
-    displayResolution: Resolution,
-    position: Position,
-    radius?: number;
-}
-
-interface Resolution {
-    height: number;
-    width: number;
-}
-
-interface Position {
-    x: number;
-    y: number;
-}
-
-export interface StreamDetails {
-    id: string;
-    options: StreamOptions;
-    displaySettings: StreamDisplaySettings;
-    stream: MediaStream;
-}
 
 export interface AudioSourceDetails {
     id: string;
@@ -66,12 +16,6 @@ export interface AudioSourceDetails {
 }
 
 declare type EventType = "error" | "recordingStopped";
-
-interface DrawingSettings {
-    color: string;
-    lineWidth: number;
-    autoEraseDelay: number;
-}
 
 let PACKAGE_VERSION = "";
 try {
@@ -81,42 +25,148 @@ try {
     // ignore
 }
 
+declare global {
+    interface Window {
+      AudioContext: AudioContext;
+      webkitAudioContext: any;
+    }
+    interface AudioContext {
+      createGainNode: any;
+    }
+    interface HTMLCanvasElement {
+        captureStream(frameRate?: number): MediaStream;
+    }
+    interface HTMLMediaElement {
+      _mediaElementSource: any
+    }
+    interface HTMLVideoElement {
+      playsInline: boolean;
+    }
+  }
+
 export type MouseTool = "draw" | "move-resize";
 
 type RecordingOptions = ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken;
 
 export class MediaStreamComposer {
-    private options: Options;
-    private merger?: VideoStreamMerger;
-    public result: MediaStream | null = null;
+    private result: MediaStream | null = null;
     private recorder?: ApiVideoMediaRecorder;
+    
+    private streams: Stream[] = [];
+    
+    private eventTarget: EventTarget; 
+    private fps = 25;
+    private resolution: Resolution;
+
+    private audioContext?: AudioContext;
+    private audioDestinationNode?: MediaStreamAudioDestinationNode;
+    private audioDelayNode?: DelayNode;
+    
     private canvas?: HTMLCanvasElement;
-    private streams: { [id: string]: StreamDetails } = {};
-    private audioSources: { [id: string]: AudioSourceDetails } = {};
+    private canvasRenderingContext: CanvasRenderingContext2D | null = null;
+
+    private frameCount = 0;
+    private started = false;
+
     private mouseTool: MouseTool | null = "move-resize";
-    private isDrawing = false;
-    private eventTarget: EventTarget;
-    private drawingSettings: DrawingSettings = {
-        lineWidth: 2,
-        color: "#000000",
-        autoEraseDelay: 0,
-    }
-    private drawings: ({ coords: [number, number][], startTime: number, } & DrawingSettings)[] = [];
-    private lastStreamId = 0;
-    private drawingsCleanerInterval?: any;
+    private drawingLayer: DrawingLayer;
 
     constructor(options: Partial<Options>) {
         this.eventTarget = new EventTarget();
-        this.options = {
-            resolution: {
-                width: 1280,
-                height: 720
-            },
-            ...options
-        };
+        this.resolution = options.resolution || { width: 1280, height: 720 };
+        this.drawingLayer = new DrawingLayer();
+    }
+
+    private init() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioSupport = !!(window.AudioContext && (new AudioContext()).createMediaStreamDestination);
+        const canvasSupport = !!document.createElement('canvas').captureStream;
+
+        if (!audioSupport || !canvasSupport) {
+            throw new Error("Audio and canvas are required for MediaStreamComposer to work");
+        }
+
+        this.audioContext = new AudioContext();
+        this.audioDestinationNode = this.audioContext.createMediaStreamDestination();
+
+        this.canvas = document.createElement("canvas");
+        this.canvas.setAttribute('width', this.resolution.width.toString());
+        this.canvas.setAttribute('height', this.resolution.height.toString());
+        this.canvas.setAttribute('style', 'position:fixed; left: 110%; pointer-events: none'); // Push off screen
+        this.canvasRenderingContext = this.canvas.getContext('2d');
+
+        // delay node for video sync
+        this.audioDelayNode = this.audioContext.createDelay(5.0);
+        this.audioDelayNode.connect(this.audioDestinationNode);
+        this._backgroundAudioHack();
+        this.started = true;
+
+        this.drawingLayer.init();
+        this._requestAnimationFrame(() => this._draw());
+        
+        // Add video
+        this.result = this.canvas?.captureStream(this.fps) || null;
+        
+
+        // Remove "dead" audio track
+        const deadTrack = this.result?.getAudioTracks()[0];
+        if (deadTrack) { this.result?.removeTrack(deadTrack); }
+
+        // Add audio
+        const audioTracks = this.audioDestinationNode.stream.getAudioTracks();
+        if (audioTracks && audioTracks.length) {
+            this.result?.addTrack(audioTracks[0]);
+        }
+
+        const d = this;
+
+        const mouseEventListener = new MouseEventListener(this.canvas!, this.streams);
+        mouseEventListener.onClick((e) => {
+            if(!e.stream) return;
+            const options = e.stream.getStreamDetails().options;
+            options.onClick && options.onClick(e.stream.getId(), { x: e.x, y: e.y })
+        });
+        mouseEventListener.onDrag((e) => this.onMouseDrag(e));
+        mouseEventListener.onDragEnd(() => this.onMouseDragEnd());
+        mouseEventListener.onMove((e) => this.onMouseMove(e));
+
+    }
+
+    private _backgroundAudioHack() {
+        const createConstantSource = () => {
+            if (this.audioContext?.createConstantSource) {
+                return this.audioContext.createConstantSource();
+            }
+
+            // not really a constantSourceNode, just a looping buffer filled with the offset value
+            const constantSourceNode = this.audioContext!.createBufferSource();
+            const constantBuffer = this.audioContext!.createBuffer(1, 1, this.audioContext!.sampleRate);
+            const bufferData = constantBuffer.getChannelData(0);
+            bufferData[0] = (0 * 1200) + 10;
+            constantSourceNode.buffer = constantBuffer;
+            constantSourceNode.loop = true;
+
+            return constantSourceNode;
+        }
+
+        // stop browser from throttling timers by playing almost-silent audio
+        const source = createConstantSource();
+        const gainNode = this.audioContext!.createGain();
+        if (gainNode && source) {
+            gainNode.gain.value = 0.001; // required to prevent popping on start
+            source.connect(gainNode);
+            gainNode.connect(this.audioContext!.destination);
+            source.start();
+        }
+    }
+
+    public getResultStream() {
+        return this.result;
     }
 
     public startRecording(options: RecordingOptions) {
+        if(!this.started) this.init();
+
         this.recorder = new ApiVideoMediaRecorder(this.result!, {
             ...options,
             origin: {
@@ -133,23 +183,25 @@ export class MediaStreamComposer {
     }
 
     public destroy() {
-        Object.keys(this.streams).forEach(streamId => this.removeStream(streamId));
-        Object.keys(this.audioSources).forEach(streamId => this.removeStream(streamId));
-        this.merger?.removeStream("drawing");
-        this.clearDrawing();
-        this.merger?.destroy();
-        if (this.drawingsCleanerInterval) {
-            clearInterval(this.drawingsCleanerInterval);
-            this.drawingsCleanerInterval = undefined;
-        }
-        this.canvas?.parentElement?.removeChild(this.canvas);
-        this.merger = undefined;
-    }
+        this.drawingLayer.destroy();
+        
+        this.recorder?.stop();
+        this.recorder = undefined;
 
-    private destroyIfNeeded() {
-        if (this.drawings.length === 0 && Object.keys(this.audioSources).length === 0 && Object.keys(this.streams).length === 0) {
-            this.destroy();
-        }
+        this.streams.forEach(stream => this.removeStream(stream.getId()));
+        
+        this.canvas?.parentElement?.removeChild(this.canvas);
+        this.canvas = undefined;
+        
+        this.audioContext?.close();
+        this.audioContext = undefined;
+
+        this.audioDestinationNode = undefined;
+
+        this.result?.getTracks().forEach(track => track.stop());
+        this.result = null;
+
+        this.started = false;
     }
 
     public addEventListener(type: EventType, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
@@ -163,28 +215,19 @@ export class MediaStreamComposer {
         return this.recorder.stop();
     }
 
-    public updateStream(streamId: string, options: StreamOptions) {
-        const stream = this.streams[streamId];
+    public updateStream(streamId: string, userOptions: StreamUserOptions) {
+        const stream = this.streams.find(s => s.getId() === streamId);
 
-        options = {
-            ...stream.options,
-            ...options,
-            index: options.index || stream.displaySettings.index,
-        };
+        if (!stream) {
+            throw new Error(`Stream with id ${streamId} does not exist`);
+        }
 
-        options = this.validateOptions(options);
-
-        this.streams[streamId] = {
-            ...stream,
-            options,
-            displaySettings: this.buildStreamDisplaySettings(streamId, stream.stream, options)
-        };
-
-
-        this.cleanIndexes();
+        stream.updateOptions(userOptions);
     }
-
+    
     public appendCanvasTo(containerQuerySelector: string) {
+        if(!this.started) this.init();
+
         const container = document.querySelector(containerQuerySelector) as HTMLCanvasElement;
         if (!container) {
             throw new Error("Container not found");
@@ -197,108 +240,91 @@ export class MediaStreamComposer {
         this.canvas!.style.pointerEvents = "unset";
     }
 
-    public removeStream(id: string) {
-        const stream = this.streams[id];
-        if (stream) {
-            this.merger?.removeStream(stream.stream);
-            delete this.streams[id];
-            stream.stream.getTracks().forEach(x => x.stop());
+    public removeStream(streamId: string) {
+        const streamIndex = this.streams.findIndex(stream => stream.getId() === streamId);
+
+        if (streamIndex === -1) {
+            throw new Error(`Stream with id ${streamId} does not exist`);
         }
-        this.cleanIndexes();
+
+        const stream = this.streams[streamIndex];
+
+        this.streams.splice(streamIndex, 1);
+        stream.destroy();
     }
 
     public addAudioSource(mediaStream: MediaStream): string {
-        if (!this.merger) {
-            this.init();
-        }
-        const streamId = "audio_" + this.lastStreamId++;
+        if(!this.started) this.init();
 
-        this.audioSources[streamId] = {
-            id: streamId,
-            stream: mediaStream
-        }
-
-        this.merger!.addStream(mediaStream, {
-            draw: (ctx, frame, done) => {
-                done();
-            }
-        } as AddStreamOptions);
-
-        return streamId;
+        const stream = new Stream(mediaStream, "AUDIO", this.audioContext!, this.audioDelayNode!, {}, this.resolution);
+        this.streams.push(stream);
+        return stream.getId();
     }
 
     public removeAudioSource(id: string) {
-        const audioSource = this.audioSources[id];
-        if (audioSource) {
-            this.merger?.removeStream(audioSource.stream);
-            delete this.audioSources[id];
-            audioSource.stream.getTracks().forEach(x => x.stop());
-        }
+        this.removeStream(id);
     }
 
-    public addStream(mediaStream: MediaStream, options: StreamOptions): string {
-        if (!this.merger) {
-            this.init();
-        }
-        const streamId = "video_" + this.lastStreamId++;
+    public addStream(mediaStream: MediaStream | HTMLImageElement, userOptions: StreamUserOptions): string {
+        if(!this.started) this.init();
 
-        options = this.validateOptions(options);
-
-
-        const video = document.createElement('video');
-        video.srcObject = mediaStream;
-
-        video.onresize = (_) => this.updateStream(streamId, options);
-
-        const displaySettings = this.buildStreamDisplaySettings(streamId, mediaStream, options);
-        this.streams[streamId] = {
-            id: streamId,
-            options,
-            displaySettings,
-            stream: mediaStream
-        }
-
-        this.merger!.addStream(mediaStream, {
-            ...options,
-            x: displaySettings.position.x,
-            y: displaySettings.position.y,
-            width: displaySettings.displayResolution.width,
-            height: displaySettings.displayResolution.height,
-            index: displaySettings.index,
-            draw: (ctx, frame, done) => this.drawStream(streamId, ctx, frame, done),
-        } as AddStreamOptions);
-
-        this.cleanIndexes();
-
-        return streamId;
+        const stream = new Stream(mediaStream, "VIDEO", this.audioContext!, this.audioDelayNode!, userOptions, this.resolution);
+        this.streams.push(stream);
+        return stream.getId();
     }
 
     public getCanvas() {
+        if(!this.started) this.init();
+
         return this.canvas;
     }
 
     public getAudioSources(): AudioSourceDetails[] {
-        return Object.values(this.audioSources);
+        return this.streams.filter(x => !x.hasDisplay()).map(x => ({
+            id: x.getId(),
+            stream: x.getStreamDetails().stream!,
+        }));
     }
 
-    public getAudioSource(id: string): AudioSourceDetails {
-        return this.audioSources[id];
+    public getAudioSource(id: string): AudioSourceDetails | undefined {
+        return this.getAudioSources().find(x => x.id === id);
     }
 
     public getStreams(): StreamDetails[] {
-        return Object.values(this.streams);
+        return this.streams.filter(s => s.hasDisplay()).map((stream, index) => {
+            const details = stream.getStreamDetails();
+            return {
+                ...details,
+                options: {
+                    ...details.options,
+                    index,
+                }
+            }
+        });
     }
 
-    public getStream(id: string): StreamDetails {
-        return this.streams[id];
+    public getStream(id: string): StreamDetails | undefined {
+        return this.getStreams().find(x => x.id === id);
     }
 
     public moveUp(streamId: string) {
-        this.updateIndex(streamId, 1);
+        const streamIndex = this.streams.findIndex(stream => stream.getId() === streamId);
+
+        if(streamIndex === -1 || streamIndex >= this.streams.length - 1) {
+            return;
+        }
+        
+        this.streams.splice(streamIndex, 2, this.streams[streamIndex+1], this.streams[streamIndex])
     }
 
     public moveDown(streamId: string) {
-        this.updateIndex(streamId, -1);
+        const streamIndex = this.streams.findIndex(stream => stream.getId() === streamId);
+
+        if(streamIndex <= 0) {
+            return;
+        }
+
+        this.streams.splice(streamIndex - 1, 2, this.streams[streamIndex], this.streams[streamIndex-1])
     }
 
     public setMouseTool(tool: MouseTool) {
@@ -306,251 +332,72 @@ export class MediaStreamComposer {
     }
 
     public setDrawingSettings(settings: Partial<DrawingSettings>) {
-        this.drawingSettings = {
-            ...this.drawingSettings,
-            ...settings
-        };
+        this.drawingLayer.setDrawingSettings(settings);
     }
 
     public clearDrawing() {
-        this.drawings = [];
+        this.drawingLayer.clear();
     }
 
     private dispatch(type: EventType, data: any): boolean {
         return this.eventTarget.dispatchEvent(Object.assign(new Event(type), { data }));
     }
 
-    private updateIndex(streamId: string, indexChange: 1 | -1) {
-        const thisStream = this.getStream(streamId);
-        const currentIndex = thisStream.displaySettings.index;
-        let skip = true;
+    private async _draw() {
+        if (!this.started) { return; }
 
-        for (const stream of Object.values(this.streams)) {
-            if (stream.displaySettings.index === currentIndex + indexChange) {
-                skip = false;
-                stream.displaySettings.index -= indexChange;
+        this.frameCount++;
+        const updateProcessingDelay = this.frameCount % 60 === 0;
+        const t0 = performance.now();
+
+        this.canvasRenderingContext?.clearRect(0, 0, this.resolution.width, this.resolution.height);
+
+        for (const stream of this.streams) {
+            stream.draw(this.canvasRenderingContext!);
+        }
+        this.drawingLayer.draw(this.canvasRenderingContext!);
+
+        const delay = performance.now() - t0;
+        if (updateProcessingDelay) {
+            this._updateAudioDelay(delay);
+        }
+
+        setTimeout(() => this._requestAnimationFrame(() => this._draw()), 1000 / this.fps - delay);
+    }
+
+    private _requestAnimationFrame(callback: () => void) {
+        let fired = false;
+        const interval = setInterval(() => {
+            if (!fired && document.hidden) {
+                fired = true;
+                clearInterval(interval);
+                callback();
             }
-        }
-        if (!skip) {
-            thisStream.displaySettings.index += indexChange;
-        }
-
-        this.getStreams().forEach(s => this.merger?.updateIndex(s.stream, s.displaySettings.index))
-    }
-
-    private drawStream(streamId: string, ctx: CanvasRenderingContext2D, frame: CanvasImageSource, done: () => void) {
-        const displaySettings = this.streams[streamId].displaySettings;
-
-        if (displaySettings.hidden) {
-            done();
-            return;
-        }
-
-        ctx.save();
-        ctx.globalAlpha = displaySettings.opacity / 100;
-
-        switch (this.streams[streamId].options.mask) {
-            case "circle":
-                ctx.beginPath();
-
-                const radius = displaySettings.radius!;
-
-                ctx.arc(
-                    displaySettings.position.x + radius,
-                    displaySettings.position.y + radius,
-                    radius,
-                    0,
-                    Math.PI * 2,
-                    false
-                );
-
-                ctx.clip();
-
-                const wider = displaySettings.streamResolution.width > displaySettings.streamResolution.height;
-                const adaptedWidth = displaySettings.displayResolution.width * displaySettings.streamResolution.width / displaySettings.streamResolution.height;
-                const adaptedHeight = displaySettings.displayResolution.height * displaySettings.streamResolution.height / displaySettings.streamResolution.width;
-
-                ctx.drawImage(frame,
-                    wider ? displaySettings.position.x - (adaptedWidth - displaySettings.displayResolution.width) / 2 : displaySettings.position.x,
-                    wider ? displaySettings.position.y : displaySettings.position.y - (adaptedHeight - displaySettings.displayResolution.height) / 2,
-                    wider ? adaptedWidth : displaySettings.displayResolution.width,
-                    wider ? displaySettings.displayResolution.height : adaptedHeight,
-                );
-
-                break;
-            default:
-                ctx.drawImage(frame, displaySettings.position.x, displaySettings.position.y, displaySettings.displayResolution.width, displaySettings.displayResolution.height);
-        }
-        ctx.restore();
-
-        done();
-    }
-
-    private validateOptions(options: StreamOptions): StreamOptions {
-        if (!options.position) {
-            options.position = "contain";
-        }
-        if (options.position === "cover" || options.position === "contain") {
-            options = {
-                ...options,
-                width: undefined,
-                height: undefined,
-                x: undefined,
-                y: undefined,
+        }, 1000 / this.fps);
+        requestAnimationFrame(() => {
+            if (!fired) {
+                fired = true;
+                clearInterval(interval);
+                callback();
             }
-        }
-        return options;
+        });
     }
 
-    private cleanIndexes() {
-        let index = 1;
-        this.getStreams()
-            .sort((a, b) => a.displaySettings.index - b.displaySettings.index)
-            .forEach(s => s.displaySettings.index = index++);
-
-        this.getStreams().forEach(s => this.merger?.updateIndex(s.stream, s.displaySettings.index));
-    }
-
-    private calculateCoverDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: StreamMask): DimensionsCalculationResult {
-        let width;
-        let height;
-
-        if (elementDimentions.width / containerDimentions.width > elementDimentions.height / containerDimentions.height) {
-            height = containerDimentions.height;
-            width = mask !== "circle" ? elementDimentions.width * containerDimentions.height / elementDimentions.height : height;
-        } else {
-            width = containerDimentions.width;
-            height = mask !== "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
-        };
-
-        let x = 0;
-        let y = 0;
-        if (width > containerDimentions.width) {
-            x = (containerDimentions.width - width) / 2;
-        }
-        if (height > containerDimentions.height) {
-            y = (containerDimentions.height - height) / 2;
-        }
-
-        return {
-            displayResolution: { width, height },
-            position: { x, y },
-            radius: width! / 2
+    private _updateAudioDelay(delayInMs: number) {
+        if (this.audioDelayNode && this.audioContext) {
+            this.audioDelayNode.delayTime.setValueAtTime(delayInMs / 1000, this.audioContext.currentTime);
         }
     }
 
-    private calculateContainDimensions(containerDimentions: Resolution, elementDimentions: Resolution, mask?: StreamMask): DimensionsCalculationResult {
-        let width;
-        let height;
-        let radius;
-
-        if (elementDimentions.width / containerDimentions.width > elementDimentions.height / containerDimentions.height) {
-            width = containerDimentions.width;
-            height = mask !== "circle" ? elementDimentions.height * containerDimentions.width / elementDimentions.width : width;
-            radius = width! / 2;
-        } else {
-            height = containerDimentions.height;
-            width = mask !== "circle" ? height * elementDimentions.width / elementDimentions.height : height;
-            radius = height! / 2;
-        };
-        let x = 0;
-        let y = 0;
-        if (width < containerDimentions.width) {
-            x = (containerDimentions.width - width) / 2;
-        }
-        if (height < containerDimentions.height) {
-            y = (containerDimentions.height - height) / 2;
-        }
-
-        return {
-            displayResolution: { width, height },
-            position: { x, y },
-            radius: width! / 2
-        }
-    }
-
-    private calculateFixedDimensions(containerDimentions: Resolution, elementDimentions: Resolution, targetDimensions: Resolution, position?: Position, mask?: StreamMask): DimensionsCalculationResult {
-
-        let width = typeof targetDimensions.width === "undefined"
-            ? undefined
-            : typeof targetDimensions.width === "number"
-                ? targetDimensions.width
-                : parseInt(targetDimensions.width || "100%", 10) * containerDimentions.width / 100;
-        let height = typeof targetDimensions.height === "undefined"
-            ? undefined
-            : typeof targetDimensions.height === "number"
-                ? targetDimensions.height
-                : parseInt(targetDimensions.height || "100%", 10) * containerDimentions.height / 100;
-
-        let radius;
-
-        if (width === undefined && height === undefined) {
-            width = containerDimentions.width;
-            height = containerDimentions.height;
-        }
-
-        if (mask === "circle") {
-            if (width === undefined) {
-                radius = height! / 2;
-                width = height;
-            } else if (height === undefined) {
-                radius = width! / 2;
-                height = width;
-            } else {
-                radius = Math.min(width!, height!) / 2;
-            }
-        }
-
-        if (width === undefined) {
-            width = elementDimentions.width * height! / elementDimentions.height;
-        }
-
-        if (height === undefined) {
-            height = elementDimentions.height * width! / elementDimentions.width;
-        }
-
-
-        return {
-            radius,
-            displayResolution: { width, height },
-            position: { x: position?.x || 0, y: position?.y || 0 }
-        }
-    }
-
-    private buildStreamDisplaySettings(id: string, mediaStream: MediaStream, options: StreamOptions): StreamDisplaySettings {
-        const trackSettings = mediaStream.getVideoTracks()[0].getSettings();
-
-        const streamResolution = { width: trackSettings.width!, height: trackSettings.height! };
-        const containerResolution = this.options.resolution;
-
-        let pos: DimensionsCalculationResult;
-
-        if (options.position === "contain") {
-            pos = this.calculateContainDimensions(containerResolution, streamResolution, options.mask);
-        } else if (options.position === "cover") {
-            pos = this.calculateCoverDimensions(containerResolution, streamResolution, options.mask);
-        } else {
-            const alignmentOrPosition: Position = { ...options } as Position;
-
-            pos = this.calculateFixedDimensions(containerResolution, streamResolution, { width: options.width!, height: options.height! }, alignmentOrPosition, options.mask);
-        }
-
-        return {
-            ...pos,
-            streamResolution,
-            index: options.index || Object.keys(this.streams).length + 1,
-            hidden: typeof options.hidden !== "undefined" ? options.hidden : false,
-            opacity: typeof options.opacity !== "undefined" ? options.opacity : 100,
-        };
-    }
 
     private onMouseMove(e: MoveEvent) {
         let cursor = "auto";
         if (e.stream && this.mouseTool === "move-resize") {
-            if (e.stream.options.draggable && e.locations?.indexOf("inside") !== -1) {
+            const options = e.stream.getStreamDetails().options;
+            if (options.draggable && e.locations?.indexOf("inside") !== -1) {
                 cursor = "grab";
             }
-            if (e.stream.options.resizable) {
+            if (options.resizable) {
                 if (e.locations?.indexOf("circle") !== -1) cursor = "all-scroll";
                 else if (e.locations?.indexOf("top") !== -1) cursor = "ns-resize";
                 else if (e.locations?.indexOf("left") !== -1) cursor = "ew-resize";
@@ -561,136 +408,22 @@ export class MediaStreamComposer {
         this.canvas!.style.cursor = cursor;
     }
 
-    private onMouseDrag(e: DragEvent) {
+    private onMouseDragEnd() {
+        if(!this.started) return;
+
         if (this.mouseTool === "draw") {
-            if (!this.isDrawing) {
-                this.drawings.push({
-                    ...this.drawingSettings,
-                    coords: [[e.x, e.y]],
-                    startTime: new Date().getTime()
-                });
-                this.isDrawing = true;
-            } else {
-                this.drawings[this.drawings.length - 1].coords.push([e.x, e.y]);
-            }
+            this.drawingLayer.onMouseDragEnd();
+        }
+    }
+    
+    private onMouseDrag(e: DragEvent) {
+        if(!this.started) return;
+
+        if (this.mouseTool === "draw") {
+            this.drawingLayer.onMouseDrag(e);
         }
         if (this.mouseTool === "move-resize" && e.dragStart.stream) {
-            if (e.dragStart.stream.options.resizable && e.dragStart.locations?.find((location) => ["top", "right", "bottom", "left", "circle"].indexOf(location) !== -1)) {
-                if (e.dragStart.locations?.indexOf("circle") !== -1) {
-                    const circleCenter = {
-                        x: e.dragStart.x - e.dragStart.offsetX! + (e.dragStart.circleRadius || 0),
-                        y: e.dragStart.y - e.dragStart.offsetY! + (e.dragStart.circleRadius || 0)
-                    };
-                    const newRadius = Math.sqrt(Math.pow(e.x - circleCenter.x, 2) + Math.pow(e.y - circleCenter.y, 2));
-                    const change = newRadius / e.dragStart.circleRadius!;
-
-                    const newDisplaySettings = {
-                        width: e.dragStart.streamWidth! * change,
-                        height: e.dragStart.streamHeight! * change,
-                        x: e.dragStart.x - e.dragStart.offsetX! + (e.dragStart.circleRadius! - newRadius),
-                        y: e.dragStart.y - e.dragStart.offsetY! + (e.dragStart.circleRadius! - newRadius),
-                        position: "fixed" as StreamPosition,
-                    };
-                    this.updateStream(e.dragStart.stream.id, newDisplaySettings);
-                } else if (e.dragStart.locations?.indexOf("bottom") !== -1) {
-                    const height = e.dragStart.streamHeight! + e.y - e.dragStart.y;
-                    const width = e.dragStart.streamWidth! * height / e.dragStart.streamHeight!;
-                    const x = e.dragStart.x - e.dragStart.offsetX! - (width - e.dragStart.streamWidth!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { position: "fixed", height, width, x });
-                } else if (e.dragStart.locations?.indexOf("top") !== -1) {
-                    const height = e.dragStart.streamHeight! - (e.y - e.dragStart.y);
-                    const width = e.dragStart.streamWidth! * height / e.dragStart.streamHeight!;
-                    const y = e.dragStart.y - e.dragStart.offsetY! + (e.y - e.dragStart.y);
-                    const x = e.dragStart.x - e.dragStart.offsetX! - (width - e.dragStart.streamWidth!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { position: "fixed", height, y, x, width });
-                } else if (e.dragStart.locations?.indexOf("left") !== -1) {
-                    const width = e.dragStart.streamWidth! - (e.x - e.dragStart.x);
-                    const height = e.dragStart.streamHeight! * width / e.dragStart.streamWidth!;
-                    const x = e.dragStart.x - e.dragStart.offsetX! + (e.x - e.dragStart.x);
-                    const y = e.dragStart.y - e.dragStart.offsetY! - (height - e.dragStart.streamHeight!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { position: "fixed", width, x, height, y });
-                } else if (e.dragStart.locations?.indexOf("right") !== -1) {
-                    const width = e.dragStart.streamWidth! + (e.x - e.dragStart.x)
-                    const height = e.dragStart.streamHeight! * width / e.dragStart.streamWidth!;
-                    const y = e.dragStart.y - e.dragStart.offsetY! - (height - e.dragStart.streamHeight!) / 2;
-                    this.updateStream(e.dragStart.stream.id, { position: "fixed", width, height, y });
-                }
-            } else if (e.dragStart.stream.options.draggable && e.dragStart.locations?.indexOf("inside") !== -1) {
-                this.updateStream(e.dragStart.stream.id, {
-                    x: e.x - e.dragStart.offsetX!,
-                    y: e.y - e.dragStart.offsetY!,
-                    width: e.dragStart.stream.displaySettings.displayResolution.width,
-                    height: e.dragStart.stream.displaySettings.displayResolution.height,
-                    position: "fixed"
-                });
-            }
+            e.dragStart.stream.onMouseDrag(e);
         }
-    }
-
-    private createDrawingStream(merger: VideoStreamMerger) {
-        merger.addStream("drawing", {
-            x: 0,
-            y: 0,
-            index: Infinity,
-            mute: true,
-            muted: true,
-            width: this.options.resolution.width,
-            height: this.options.resolution.height,
-            draw: (ctx, frame, done) => {
-                this.drawings.forEach(drawing => {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.lineWidth = drawing.lineWidth;
-                    ctx.strokeStyle = drawing.color;
-                    if (drawing.autoEraseDelay && drawing.startTime > 0) {
-                        const elapsedTime = (new Date().getTime() - drawing.startTime) / 1000;
-                        const remainingTime = drawing.autoEraseDelay - elapsedTime;
-                        if (remainingTime <= 1 && remainingTime >= 0) {
-                            ctx.globalAlpha = remainingTime;
-                        } else if (remainingTime < 0) {
-                            ctx.globalAlpha = 0;
-                        }
-                    }
-
-
-                    ctx.moveTo(drawing.coords[0][0], drawing.coords[0][1]);
-                    for (let i = 1; i < drawing.coords.length; i++) {
-                        ctx.lineTo(drawing.coords[i][0], drawing.coords[i][1]);
-                    }
-                    ctx.stroke();
-                    ctx.restore();
-                });
-
-                done();
-            },
-            audioEffect: undefined as any,
-        });
-    }
-
-    private init(): VideoStreamMerger {
-        if (!this.merger) {
-            this.merger = new VideoStreamMerger({ ...this.options.resolution, fps: 25, clearRect: true } as any);
-            this.merger.start();
-            this.canvas = (this.merger as any)._canvas;
-
-            this.result = this.merger.result;
-            this.createDrawingStream(this.merger);
-
-            const d = this;
-
-            this.drawingsCleanerInterval = setInterval(() => {
-                const currentTime = new Date().getTime();
-                d.drawings = d.drawings.filter((drawing) => drawing.autoEraseDelay === 0 || (currentTime - drawing.startTime) / 1000 <= drawing.autoEraseDelay);
-                d.destroyIfNeeded();
-            }, 1000);
-
-            const mouseEventListener = new MouseEventListener(this.canvas!, this.streams);
-            mouseEventListener.onClick((e) => e.stream?.options.onClick && e.stream.options.onClick(e.stream.id, { x: e.x, y: e.y }));
-            mouseEventListener.onDrag((e) => this.onMouseDrag(e));
-            mouseEventListener.onDragEnd(() => this.isDrawing = false);
-            mouseEventListener.onMove((e) => this.onMouseMove(e));
-        }
-
-        return this.merger;
     }
 }

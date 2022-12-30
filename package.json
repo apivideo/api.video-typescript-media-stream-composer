@@ -1,6 +1,6 @@
 {
   "name": "@api.video/media-stream-composer",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "api.video media stream composer",
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "scripts": {
     "tslint": "tslint --project .",
     "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch ",
     "prepublishOnly": "npm run build",
     "test": "npm run build && mocha -r ts-node/register -r jsdom-global/register 'test/**/*.ts'"
   },
@@ -41,8 +42,7 @@
   },
   "dependencies": {
     "@api.video/media-recorder": "^1.0.7",
-    "core-js": "^3.23.4",
-    "video-stream-merger": "^4.0.1"
+    "core-js": "^3.23.4"
   },
   "engines" : { 
     "node" : ">=15.0.0"
