@@ -148,6 +148,10 @@ The addStream() method adds a stream to the composition. A stream can be either 
 
 It takes a `MediaStream | HTMLImageElement` and an `StreamOptions` parameter.
 
+**Note regarding images origin** 
+
+When you load an image onto the composition, the origin of the image must be the same as the origin of the webpage in order for the image to be displayed correctly. This means that the image must be served from the same domain, or the server hosting the image must include the appropriate CORS (Cross-Origin Resource Sharing) headers to allow the image to be displayed on the canvas from a different origin. More details here: https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image .
+
 #### Options
 
 | Option name | Type                                                         | Default value | Description                                                                                                                                               |
@@ -166,7 +170,7 @@ It takes a `MediaStream | HTMLImageElement` and an `StreamOptions` parameter.
 |     opacity | number                                                       | 100         | Opacity of the stream (from 0 to 100)                                                                                                       |
 |     onClick | (streamId: string, event: { x: number; y: number; }) => void | undefined     | A callback function that will be called when the stream is clicked                                                                                        |
 
-**Example**
+**Example (screen capture)**
 
 ```javascript
 
@@ -187,7 +191,25 @@ navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then((stre
 
     // ...
 });
+```
 
+**Example (image)**
+
+```javascript
+
+const image = new Image();
+image.crossOrigin = 'anonymous';
+image.src = "./my-logo.jpg"; 
+
+const streamId = composer.addStream(image, {
+    position: "fixed",
+    x: 100,
+    y: 100,
+    width: 300,
+    draggable: true,
+    resizable: true,
+    mask: "none"
+});
 ```
 
 ### `updateStream(streamId: string, options: StreamOptions): void`
