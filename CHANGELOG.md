@@ -1,5 +1,10 @@
 # Changelog
 All changes to this project will be documented in this file.
+
+## [0.2.0] - 2023-01-02
+- Add Image streams
+- Refactor code
+
 ## [0.1.8] - 2022-10-11
 - Allow user to customize video name
 

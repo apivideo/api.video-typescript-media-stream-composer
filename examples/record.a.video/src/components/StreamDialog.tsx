@@ -1,20 +1,21 @@
-import { StreamMask, StreamPosition } from '@api.video/media-stream-composer'
-import CircleIcon from '@mui/icons-material/AccountCircle'
-import PhotoCameraFrontIcon from '@mui/icons-material/PhotoCameraFront'
-import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor'
-import { FormControl, FormControlLabel, FormGroup, FormLabel, InputLabel, MenuItem, Radio, RadioGroup, Select, Slider, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import { useEffect, useState } from 'react'
-import { ContainDimentionIcon, CoverDimentionIcon, FixedDimensionIcon } from './Icons'
-import styles from '../../styles/Home.module.css'
+import { StreamMask, StreamPosition } from '@api.video/media-stream-composer';
+import CircleIcon from '@mui/icons-material/AccountCircle';
+import ImageIcon from '@mui/icons-material/Image';
+import PhotoCameraFrontIcon from '@mui/icons-material/PhotoCameraFront';
+import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
+import { FormControl, FormControlLabel, FormGroup, FormLabel, InputLabel, MenuItem, Radio, RadioGroup, Select, Slider, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import { createRef, useEffect, useState } from 'react';
+import styles from '../../styles/Home.module.css';
+import { ContainDimentionIcon, CoverDimentionIcon, FixedDimensionIcon } from './Icons';
 
 export interface StreamFormValues {
     type: StreamType;
-    position: StreamPosition;
+    position: StreamPosition; 
     mask: StreamMask;
     width?: string;
     height?: string;
@@ -24,6 +25,7 @@ export interface StreamFormValues {
     resizable: boolean;
     deviceId?: string;
     opacity?: number;
+    imageUrl?: string;
 }
 
 interface StreamDialogProps {
@@ -33,7 +35,7 @@ interface StreamDialogProps {
     onClose?: () => void;
 }
 
-type StreamType = "screen" | "webcam";
+type StreamType = "screen" | "webcam" | "image";
 
 
 const StreamDialog = (props: StreamDialogProps) => {
@@ -48,7 +50,9 @@ const StreamDialog = (props: StreamDialogProps) => {
     const [draggable, setDraggable] = useState(false);
     const [resizable, setResizable] = useState(false);
     const [deviceId, setDeviceId] = useState<string>();
+    const [imageUrl, setImageUrl] = useState<string>("");
     const [screencastAvailable, setScreencastAvailable] = useState(typeof navigator !== "undefined" && !!navigator.mediaDevices.getDisplayMedia)
+    const fileInputRef = createRef<HTMLInputElement>();
 
     // select the first device when the devices are loaded
     useEffect(() => {
@@ -90,11 +94,32 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 value={type}
                                 exclusive
                                 onChange={(v, w) => w && setType(w)}>
-                                <ToggleButton disabled={!screencastAvailable} value="screen"><ScreenshotMonitorIcon  className={styles.toogleButtonIcon} /> Screencast</ToggleButton>
-                                <ToggleButton disabled={props.devices.length === 0} value="webcam"><PhotoCameraFrontIcon  className={styles.toogleButtonIcon} /> Webcam</ToggleButton>
+                                <ToggleButton disabled={!screencastAvailable} value="screen"><ScreenshotMonitorIcon className={styles.toogleButtonIcon} /> Screencast</ToggleButton>
+                                <ToggleButton disabled={props.devices.length === 0} value="webcam"><PhotoCameraFrontIcon className={styles.toogleButtonIcon} /> Webcam</ToggleButton>
+                                <ToggleButton value="image"><ImageIcon className={styles.toogleButtonIcon} /> Image</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>
+                    {type === "image" && <div>
+                    <FormControl style={{width: "100%"}}>
+                            <FormLabel component="legend" id="device-radio-buttons-group-label">Image</FormLabel>
+                            <Button variant="contained" onClick={() => fileInputRef.current && fileInputRef.current.click()}>Select an image</Button>
+                            <input style={{display: "none"}} ref={fileInputRef} type="file" accept="image/*" onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                    const file = e.target.files[0];
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => {
+                                        if (e.target && e.target.result) {
+                                            setImageUrl(e.target.result as string);
+                                        }
+                                    }
+                                    reader.readAsDataURL(file);
+                                }
+                            }} />
+                            <img src={imageUrl} style={{width: "100%", marginTop: "10px"}} />
+                        </FormControl>
+                    </div>
+                    }
                     {type === "webcam" && <div>
                         <FormControl>
                             <FormLabel component="legend" id="device-radio-buttons-group-label">Device</FormLabel>
@@ -122,9 +147,9 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 value={position}
                                 exclusive
                                 onChange={(v, w) => w && setPosition(w)}>
-                                <ToggleButton value="cover"><CoverDimentionIcon  className={styles.toogleButtonIcon} /> cover</ToggleButton>
-                                <ToggleButton value="contain"><ContainDimentionIcon  className={styles.toogleButtonIcon} />contain</ToggleButton>
-                                <ToggleButton value="fixed"><FixedDimensionIcon  className={styles.toogleButtonIcon} />fixed</ToggleButton>
+                                <ToggleButton value="cover"><CoverDimentionIcon className={styles.toogleButtonIcon} /> cover</ToggleButton>
+                                <ToggleButton value="contain"><ContainDimentionIcon className={styles.toogleButtonIcon} />contain</ToggleButton>
+                                <ToggleButton value="fixed"><FixedDimensionIcon className={styles.toogleButtonIcon} />fixed</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>
@@ -224,7 +249,7 @@ const StreamDialog = (props: StreamDialogProps) => {
                                 onChange={(v, w) => w && setMask(w)}
                             >
                                 <ToggleButton value="none">none</ToggleButton>
-                                <ToggleButton value="circle"><CircleIcon  className={styles.toogleButtonIcon} /> circle</ToggleButton>
+                                <ToggleButton value="circle"><CircleIcon className={styles.toogleButtonIcon} /> circle</ToggleButton>
                             </ToggleButtonGroup>
                         </FormGroup>
                     </FormControl>
@@ -253,8 +278,9 @@ const StreamDialog = (props: StreamDialogProps) => {
         </DialogContent>
         <DialogActions>
             <Button onClick={() => props.onClose && props.onClose()}>Cancel</Button>
-            <Button disabled={!screencastAvailable && props.devices.length === 0} onClick={() => props.onSubmit && props.onSubmit({
+            <Button disabled={!screencastAvailable && props.devices.length === 0 || (type === "image" && imageUrl === "")} onClick={() => props.onSubmit && props.onSubmit({
                 type,
+                imageUrl,
                 position: position!,
                 mask: mask!,
                 width,

@@ -63,6 +63,7 @@
   
 .settingsPaper h2 button {
   text-align: right;
+  top: -2px;
 }
 
 .settingsPaper .noStream {
