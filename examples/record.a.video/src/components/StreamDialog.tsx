@@ -1,4 +1,3 @@
-import { StreamMask, StreamPosition } from '@api.video/media-stream-composer';
 import CircleIcon from '@mui/icons-material/AccountCircle';
 import ImageIcon from '@mui/icons-material/Image';
 import PhotoCameraFrontIcon from '@mui/icons-material/PhotoCameraFront';
@@ -15,8 +14,8 @@ import { ContainDimentionIcon, CoverDimentionIcon, FixedDimensionIcon } from './
 
 export interface StreamFormValues {
     type: StreamType;
-    position: StreamPosition; 
-    mask: StreamMask;
+    position: "contain" | "cover" | "fixed"; 
+    mask: "none" | "circle";
     width?: string;
     height?: string;
     top?: string;
@@ -40,8 +39,8 @@ type StreamType = "screen" | "webcam" | "image";
 
 const StreamDialog = (props: StreamDialogProps) => {
     const [type, setType] = useState<StreamType>("screen");
-    const [position, setPosition] = useState<StreamPosition>();
-    const [mask, setMask] = useState<StreamMask>();
+    const [position, setPosition] = useState< "contain" | "cover" | "fixed">();
+    const [mask, setMask] = useState< "none" | "circle">();
     const [width, setWidth] = useState<string>();
     const [opacity, setOpacity] = useState<number>(100);
     const [height, setHeight] = useState<string>();
