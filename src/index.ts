@@ -15,7 +15,7 @@ export interface AudioSourceDetails {
     stream: MediaStream;
 }
 
-declare type EventType = "error" | "recordingStopped";
+declare type EventType = "error" | "recordingStopped" | "videoPlayable";
 
 let PACKAGE_VERSION = "";
 try {
@@ -177,8 +177,12 @@ export class MediaStreamComposer {
                 ...options.origin
             },
         });
-        this.recorder.addEventListener("error", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("error"), { data: (e as any).data })));
-        this.recorder.addEventListener("recordingStopped", (e) => this.eventTarget.dispatchEvent(Object.assign(new Event("recordingStopped"), { data: (e as any).data })));
+
+        const eventTypes: EventType[] = ["error", "recordingStopped", "videoPlayable"];
+        eventTypes.forEach(event => {
+            this.recorder?.addEventListener(event, (e) => this.eventTarget.dispatchEvent(Object.assign(new Event(event), { data: (e as any).data })));
+        });
+        
         this.recorder.start();
     }
 
@@ -359,7 +363,8 @@ export class MediaStreamComposer {
 
         const delay = performance.now() - t0;
         if (updateProcessingDelay) {
-            this._updateAudioDelay(delay);
+            // this._updateAudioDelay(delay);
+            this._updateAudioDelay(0); // fixme
         }
 
         setTimeout(() => this._requestAnimationFrame(() => this._draw()), 1000 / this.fps - delay);
