@@ -10,7 +10,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import StopRecordingIcon from '@mui/icons-material/StopCircle'
 import VisibilityOnIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -90,6 +90,7 @@ const Home: NextPage = () => {
   const [uploadSettings, setUploadSettings] = useState<UploadSettings>({
     videoName: "My record.a.video composition",
   });
+  const [videoStatus, setVideoStatus] = useState<"recording" | "encoding" | "playable" | undefined>();
 
   const router = useRouter()
 
@@ -143,8 +144,8 @@ const Home: NextPage = () => {
 
   const addStream = async (opts: StreamFormValues) => {
     setAddStreamDialogOpen(false);
-    let stream: MediaStream | HTMLImageElement; 
-    switch(opts.type) {
+    let stream: MediaStream | HTMLImageElement;
+    switch (opts.type) {
       case "screen":
         stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         break;
@@ -157,9 +158,9 @@ const Home: NextPage = () => {
         image.src = opts.imageUrl!;
         stream = image;
     }
-      /*opts.type === "webcam"
-        ? await navigator.mediaDevices.getUserMedia({ audio: true, video: { deviceId: opts.deviceId } })
-        : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });*/
+    /*opts.type === "webcam"
+      ? await navigator.mediaDevices.getUserMedia({ audio: true, video: { deviceId: opts.deviceId } })
+      : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });*/
 
     setTimeout(() => {
       composer.addStream(stream, {
@@ -183,6 +184,13 @@ const Home: NextPage = () => {
     }, 100);
   }
 
+  let stepNum = 0;
+  if (videoStatus === "encoding") {
+    stepNum = 1;
+  }
+  if (videoStatus === "playable") {
+    stepNum = 2;
+  }
 
   return (
     <div className={styles.container}>
@@ -225,23 +233,23 @@ const Home: NextPage = () => {
               <PopupState variant="popover" popupId="addStreamMenu">
                 {(popupState) => (
                   <React.Fragment>
-                    <Button variant="text" {...bindTrigger(popupState)}><AddCircleIcon sx={{ mr: 1 }} /> add a stream</Button>
+                    <Tooltip title="Add" arrow><Button variant="text" {...bindTrigger(popupState)}><AddCircleIcon sx={{ mr: 1 }} /> add a stream</Button></Tooltip>
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
                       <MenuItem onClick={async () => {
-                          popupState.close();
-                          addStream({
-                            type: "image",
-                            imageUrl: "/Logo_white_text.svg",
-                            position: "fixed",
-                            width: "38%",
-                            top: "88%",
-                            left: "60%",
-                            mask: "none",
-                            draggable: true,
-                            resizable: true,
-                          });
-                        }}>Add api.video logo :)</MenuItem>
+                        popupState.close();
+                        addStream({
+                          type: "image",
+                          imageUrl: "/Logo_white_text.svg",
+                          position: "fixed",
+                          width: "38%",
+                          top: "88%",
+                          left: "60%",
+                          mask: "none",
+                          draggable: true,
+                          resizable: true,
+                        });
+                      }}>Add api.video logo :)</MenuItem>
 
                       {videoDevices.map(d =>
                       ([
@@ -414,33 +422,69 @@ const Home: NextPage = () => {
               onClick={() => setUploadSettingsDialogOpen(true)}
             ><SettingsIcon /></Button></h2>
 
-            <Button disabled={streams.length === -1} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
-              if (!isRecording) {
-                composer.startRecording({
-                  uploadToken,
-                  videoName: uploadSettings.videoName,
-                  origin: {
-                    application: {
-                      name: "record-a-video",
-                      version: "1.0.0",
-                    }
+            <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on &quot;Add a stream&quot; above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
+              <span>
+                <Button disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
+                  if (!isRecording) {
+                    composer.startRecording({
+                      uploadToken,
+                      videoName: uploadSettings.videoName,
+                      origin: {
+                        application: {
+                          name: "record-a-video",
+                          version: "1.0.0",
+                        }
+                      }
+                    });
+                    setVideoStatus("recording");
+                    composer.addEventListener("error", (e) => {
+                      setErrorMessage((e as any).data.title || "An unknown error occurred");
+                      setIsRecording(false);
+                    });
+                    composer.addEventListener("videoPlayable", (e) => {
+                      setVideoStatus("playable");
+                      setPlayerUrl((e as any).data.assets.player);
+                    });
+                    setPlayerUrl(null);
+                    setIsRecording(true);
+                  } else {
+                    composer.stopRecording().then(e => setVideoStatus("encoding"));
+                    setIsRecording(false);
                   }
-                });
-                composer.addEventListener("error", (e) => {
-                  setErrorMessage((e as any).data.title || "An unknown error occurred");
-                  setIsRecording(false);
-                });
-                setPlayerUrl(null);
-                setIsRecording(true);
-              } else {
-                composer.stopRecording().then(e => setPlayerUrl(e.assets?.player || ""));
-                setIsRecording(false);
-              }
-            }}>{!isRecording
-              ? <><StartRecordingIcon className={styles.toogleButtonIcon} />start recording</>
-              : <><StopRecordingIcon className={styles.toogleButtonIcon} />stop recording ({recordingDuration} sec)</>}
-            </Button>
-            {playerUrl !== null && <p>Your recording is available: <br /><a href={playerUrl} rel="noreferrer" target="_blank">recording</a>.</p>}
+                }}>{!isRecording
+                  ? <><StartRecordingIcon className={styles.toogleButtonIcon} />start recording</>
+                  : <><StopRecordingIcon className={styles.toogleButtonIcon} />stop recording ({recordingDuration} sec)</>}
+                </Button>
+              </span>
+            </Tooltip>
+            {videoStatus && <>
+              <h2>Status</h2>
+
+              <Stepper activeStep={stepNum} orientation="vertical">
+
+                <Step completed={stepNum > 0}>
+                  <StepLabel style={{ fontWeight: "bold" }}>Uploading</StepLabel>
+                  <StepContent>
+                    <Typography>The video is currently being recorded and uploaded simultaneously thanks to api.video&apos;s <a target="_blank" rel="noreferrer" href="https://api.video/blog/tutorials/progressively-upload-large-video-files-without-compromising-on-speed">progressive upload</a> feature.</Typography>
+                  </StepContent>
+                </Step>
+
+                <Step completed={stepNum > 1}>
+                  <StepLabel>Encoding</StepLabel>
+                  <StepContent>
+                    <Typography>Your recording is currently being encoded in HLS for optimal streaming. It will be available soon. Please wait.</Typography>
+                  </StepContent>
+                </Step>
+
+                <Step completed={stepNum > 1}>
+                  <StepLabel>Done</StepLabel>
+                  <StepContent>
+                    <Typography>You can watch the recording by clicking here: <a href={playerUrl} rel="noreferrer" target="_blank">open player</a>. Highest qualities are still being processed. The viewing experience will be even better if you refresh the player in a few seconds. </Typography>
+                    <Typography style={{marginTop: "1em"}}>Want to offer a similar experience in your application? <a href="https://dashboard.api.video/register" target="_blank" rel="noreferrer">Create your free api.video account</a> and start building with video now. No cc required.</Typography>
+                  </StepContent>
+                </Step>
+              </Stepper>
+            </>}
           </Paper>
 
 
@@ -463,7 +507,7 @@ const Home: NextPage = () => {
             onClose={() => setUploadSettingsDialogOpen(false)}
             uploadSettings={uploadSettings}
             onSubmit={(values) => { setUploadSettings(values); setUploadSettingsDialogOpen(false) }} />
-          
+
         </div>
       </ThemeProvider>
     </div>
