@@ -1,4 +1,4 @@
-import { ApiVideoMediaRecorder, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadResponse } from "@api.video/media-recorder";
+import { ApiVideoMediaRecorder, Options as RecorderOptions, ProgressiveUploaderOptionsWithAccessToken, ProgressiveUploaderOptionsWithUploadToken, VideoUploadResponse } from "@api.video/media-recorder";
 import { DrawingLayer, DrawingSettings } from "./drawing-layer";
 import MouseEventListener, { DragEvent, MoveEvent } from "./mouse-event-listener";
 import { Resolution } from "./stream-position";
@@ -46,7 +46,7 @@ declare global {
 
 export type MouseTool = "draw" | "move-resize";
 
-type RecordingOptions = ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken;
+type RecordingOptions =  RecorderOptions & (ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken);
 
 export class MediaStreamComposer {
     private result: MediaStream | null = null;
@@ -162,6 +162,10 @@ export class MediaStreamComposer {
 
     public getResultStream() {
         return this.result;
+    }
+
+    public static getSupportedMimeTypes() {
+        return ApiVideoMediaRecorder.getSupportedMimeTypes();
     }
 
     public startRecording(options: RecordingOptions) {
