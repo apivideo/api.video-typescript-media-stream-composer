@@ -1,6 +1,10 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.2.2] - 2023-02-07
+- add `getSupportedMimeType` method
+- add `mimeType` & `generateFileOnStop` options
+
 ## [0.2.1] - 2023-01-24
 - Add `videoPlayable` event
 - Temporary remove computed audio delay

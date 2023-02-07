@@ -61,6 +61,21 @@ const composer = (() => {
     lineWidth: 6,
     autoEraseDelay: 2
   });
+  mediaStreamComposer.addEventListener("recordingStopped", (e: any) => {
+    if (e.data.file) {
+      const a = document.createElement("a");
+      console.log(e.data.file);
+      let extension = "mp4";
+      try {
+        extension = (e.data.file.type.split("/")[1]).split(";")[0];
+      } catch (e) {
+        console.error(e);
+      }
+      a.href = URL.createObjectURL(e.data.file);
+      a.download = `video.${extension}`;
+      a.click();
+    }
+  });
   return mediaStreamComposer;
 })();
 
@@ -89,6 +104,7 @@ const Home: NextPage = () => {
   const [audioStreamId, setAudioStreamId] = useState<string | undefined>();
   const [uploadSettings, setUploadSettings] = useState<UploadSettings>({
     videoName: "My record.a.video composition",
+    downloadVideoFile: false,
   });
   const [videoStatus, setVideoStatus] = useState<"recording" | "encoding" | "playable" | undefined>();
 
@@ -429,6 +445,8 @@ const Home: NextPage = () => {
                     composer.startRecording({
                       uploadToken,
                       videoName: uploadSettings.videoName,
+                      generateFileOnStop: uploadSettings.downloadVideoFile,
+                      mimeType: uploadSettings.mimeType,
                       origin: {
                         application: {
                           name: "record-a-video",
@@ -445,6 +463,7 @@ const Home: NextPage = () => {
                       setVideoStatus("playable");
                       setPlayerUrl((e as any).data.assets.player);
                     });
+
                     setPlayerUrl(null);
                     setIsRecording(true);
                   } else {
@@ -479,8 +498,8 @@ const Home: NextPage = () => {
                 <Step completed={stepNum > 1}>
                   <StepLabel>Done</StepLabel>
                   <StepContent>
-                    <Typography>You can watch the recording by clicking here: <a href={playerUrl} rel="noreferrer" target="_blank">open player</a>. Highest qualities are still being processed. The viewing experience will be even better if you refresh the player in a few seconds. </Typography>
-                    <Typography style={{marginTop: "1em"}}>Want to offer a similar experience in your application? <a href="https://dashboard.api.video/register" target="_blank" rel="noreferrer">Create your free api.video account</a> and start building with video now. No cc required.</Typography>
+                    <Typography>You can watch the recording <a href={playerUrl!} rel="noreferrer" target="_blank">by clicking here</a>. Higher qualities are still being processed. The viewing experience will be even better if you refresh the player in a few seconds. </Typography>
+                    <Typography style={{ marginTop: "1em" }}>Want to offer a similar experience in your application? <a href="https://dashboard.api.video/register" target="_blank" rel="noreferrer">Create your free api.video account</a> and start building with video now. No cc required.</Typography>
                   </StepContent>
                 </Step>
               </Stepper>
