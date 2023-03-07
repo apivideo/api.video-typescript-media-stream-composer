@@ -3,19 +3,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #EFEFF8;
+  height: 100vh;
+}
+.container > p {
+  margin: inherit;
+  margin-bottom: 20px;
+}
+.container > p:first-of-type {
+  margin: auto 0 5px 0;
 }
 
 .columnsContainer {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
   width: 100%;
   max-width: 1600px;
+  height: 60%;
+  margin-top: auto;
 }
 
 .columnsContainer > div {
   margin: 1em;
-  flex: 1;
 }
 
 .columnsContainer fieldset {
@@ -53,6 +62,7 @@
   padding: 0px 1em 1em 1em;
   min-width: 290px;
   width: 100%;
+  overflow: scroll;
 }
 
 .settingsPaper h2 {
@@ -71,10 +81,6 @@
   font-style: italic;
 }
 
-.previewPaper {
-  padding: 0px 1em 1em 1em;
-}
-
 
 @media (min-width: 540px) {
   .previewPaper {
@@ -86,9 +92,16 @@
   }
 }
 
-.previewPaper div {
-  border-width: 1;
-    background-color: black;
-    border-color: black;
-    border-style: solid;
+.previewPaper {
+  background-color: #444F6C;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.previewPaper > p {
+  font-weight: 500;
+  font-size: 16px;
+  color: #FFFFFF;
 }

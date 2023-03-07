@@ -19,6 +19,7 @@ import {
 } from 'material-ui-popup-state/hooks'
 import type { NextPage } from 'next'
 import Head from 'next/head'
+import NextImage from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import { CirclePicker } from 'react-color'
@@ -217,32 +218,8 @@ const Home: NextPage = () => {
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
-        <h1>@api.video/media-stream-composer library sample application</h1>
-        <div>
-          <p>This Next.js application aims to show the features offered by the <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer">@api.video/media-stream-composer</a> library. </p>
-          <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">record.a.video</a>.</p>
-          <Snackbar
-            open={firstStreamAddedAlertOpen}
-            onClose={() => setFirstStreamAddedAlertOpen(false)}
-            autoHideDuration={4000}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={() => setFirstStreamAddedAlertOpen(false)} severity="success" sx={{ width: '100%' }}>
-              You have added your first stream. You can now add more to create your composition!
-            </Alert>
-          </Snackbar>
-          <Snackbar
-            open={!!errorMessage}
-            onClose={() => setErrorMessage(undefined)}
-            autoHideDuration={4000}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={() => setErrorMessage(undefined)} severity="error" sx={{ width: '100%' }}>
-              {errorMessage}
-            </Alert>
-          </Snackbar>
-        </div>
         <div className={styles.columnsContainer}>
+
           <Paper className={styles.settingsPaper} elevation={4}>
             <h2>
               <p>Video streams</p>
@@ -506,11 +483,30 @@ const Home: NextPage = () => {
             </>}
           </Paper>
 
+          <div id="canvas-container" className={styles.previewPaper} style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}` }}>
+            {streams.length === 0 && <><NextImage src="/video-off.svg" alt='No stream' width={48} height={48} /><p>No video stream yet</p></>}
+          </div>
 
-          <Paper elevation={4} className={styles.previewPaper} style={{ flex: 1 }}>
-            <h2>Preview</h2>
-            <div id="canvas-container" style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}` }} />
-          </Paper>
+          <Snackbar
+            open={firstStreamAddedAlertOpen}
+            onClose={() => setFirstStreamAddedAlertOpen(false)}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setFirstStreamAddedAlertOpen(false)} severity="success" sx={{ width: '100%' }}>
+              You have added your first stream. You can now add more to create your composition!
+            </Alert>
+          </Snackbar>
+          <Snackbar
+            open={!!errorMessage}
+            onClose={() => setErrorMessage(undefined)}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setErrorMessage(undefined)} severity="error" sx={{ width: '100%' }}>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
 
           <StreamDialog
             open={addStreamDialogIsOpen}
@@ -528,6 +524,8 @@ const Home: NextPage = () => {
             onSubmit={(values) => { setUploadSettings(values); setUploadSettingsDialogOpen(false) }} />
 
         </div>
+        <p>This Next.js application aims to show the features offered by the <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer">@api.video/media-stream-composer</a> library. </p>
+        <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">record.a.video</a>.</p>
       </ThemeProvider>
     </div>
   )
