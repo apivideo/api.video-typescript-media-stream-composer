@@ -32,7 +32,8 @@
 }
 
 .columnsContainer > div h2:first-child {
-  margin-top: 0.8em
+  margin-top: 0.8em;
+  margin-bottom: 1.4rem;
 }
 
 .table {
@@ -59,21 +60,27 @@
 }
 
 .settingsPaper {
+  position: relative;
   padding: 0px 1em 1em 1em;
   min-width: 290px;
   width: 100%;
   overflow: scroll;
+  border-radius: 8px;
 }
 
 .settingsPaper h2 {
   display: flex;
   align-items: center;
   gap: 5px;
+  margin-top: 3rem;
+  margin-bottom: 1.3rem;
+  font-weight: 600;
+  font-size: 1rem;
 }
   
 .settingsPaper h2 button {
-  top: 2px;
-  min-width: 34px;
+  min-width: 30px;
+  padding: 0;
 }
 .settingsPaper h2 button > svg {
   margin-right: 0;
@@ -81,13 +88,26 @@
 
 .settingsPaper .noStream {
   text-align: center;
-  font-style: italic;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: .3rem;
+  margin-top: .3rem;
+  font-weight: 500;
+  font-size: 12px;
 }
 
+.header {
+  position: absolute;
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background-color: #444F6C;
+  padding: .5rem .8rem;
+  left: 0;
+}
+.header > img {
+  display: block;
+}
 
 @media (min-width: 540px) {
   .previewPaper {
@@ -111,4 +131,9 @@
   font-weight: 500;
   font-size: 16px;
   color: #FFFFFF;
+}
+
+.videoOff {
+  display: block;
+  margin: 0 auto;
 }

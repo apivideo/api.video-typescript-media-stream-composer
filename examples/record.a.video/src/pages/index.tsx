@@ -221,12 +221,13 @@ const Home: NextPage = () => {
         <div className={styles.columnsContainer}>
 
           <Paper className={styles.settingsPaper} elevation={4}>
+            <div className={styles.header}><NextImage src="/logo.svg" alt="api.video logo" width={65} height={15} /></div>
             <h2>
               <p>Video streams</p>
               <PopupState variant="popover" popupId="addStreamMenu">
                 {(popupState) => (
                   <React.Fragment>
-                    <Tooltip title="Add" arrow><Button variant="text" {...bindTrigger(popupState)}><AddIcon sx={{ mr: 1 }} /></Button></Tooltip>
+                    <Tooltip title="Add" arrow><Button variant="text" {...bindTrigger(popupState)}><AddIcon fontSize='medium' sx={{ mr: 1 }} /></Button></Tooltip>
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
                       <MenuItem onClick={async () => {
@@ -301,8 +302,13 @@ const Home: NextPage = () => {
             </h2>
 
             {streams.length === 0
-              ? <p className={styles.noStream}><AddIcon /> to add video streams</p>
-              : <TableContainer className={styles.table}>
+              ? (
+                <>
+                  <NextImage className={styles.videoOff} src="/video-off.svg" alt='No stream' width={22} height={22} />
+                  <p className={styles.noStream}><AddIcon fontSize='small' color='primary' /> to add video streams</p>
+                </>
+              ) : 
+              <TableContainer className={styles.table}>
                 <Table size="small" aria-label="simple table">
                   <TableHead>
                     <TableRow>
