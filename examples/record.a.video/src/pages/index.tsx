@@ -1,5 +1,5 @@
 import { MediaStreamComposer, MouseTool, StreamDetails } from '@api.video/media-stream-composer'
-import AddCircleIcon from '@mui/icons-material/AddCircle'
+import AddIcon from '@mui/icons-material/Add';
 import AspectRatioIcon from '@mui/icons-material/AspectRatio'
 import DeleteIcon from '@mui/icons-material/Delete'
 import StartRecordingIcon from '@mui/icons-material/FiberManualRecord'
@@ -226,7 +226,7 @@ const Home: NextPage = () => {
               <PopupState variant="popover" popupId="addStreamMenu">
                 {(popupState) => (
                   <React.Fragment>
-                    <Tooltip title="Add" arrow><Button variant="text" {...bindTrigger(popupState)}><AddCircleIcon sx={{ mr: 1 }} /> add a stream</Button></Tooltip>
+                    <Tooltip title="Add" arrow><Button variant="text" {...bindTrigger(popupState)}><AddIcon sx={{ mr: 1 }} /></Button></Tooltip>
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem onClick={async () => { popupState.close(); setAddStreamDialogOpen(true); }}>Add a custom stream ...</MenuItem>
                       <MenuItem onClick={async () => {
@@ -301,7 +301,7 @@ const Home: NextPage = () => {
             </h2>
 
             {streams.length === 0
-              ? <p className={styles.noStream}>No stream yet. Click <a onClick={async () => setAddStreamDialogOpen(true)}>here</a> to add a stream.</p>
+              ? <p className={styles.noStream}><AddIcon /> to add video streams</p>
               : <TableContainer className={styles.table}>
                 <Table size="small" aria-label="simple table">
                   <TableHead>

@@ -67,18 +67,25 @@
 
 .settingsPaper h2 {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
 }
   
 .settingsPaper h2 button {
-  text-align: right;
-  top: -2px;
+  top: 2px;
+  min-width: 34px;
+}
+.settingsPaper h2 button > svg {
+  margin-right: 0;
 }
 
 .settingsPaper .noStream {
   text-align: center;
   font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 
