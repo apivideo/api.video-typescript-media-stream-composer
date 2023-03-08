@@ -1,7 +1,7 @@
 import { MediaStreamComposer, MouseTool, StreamDetails } from '@api.video/media-stream-composer'
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AspectRatioIcon from '@mui/icons-material/AspectRatio'
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import DeleteIcon from '@mui/icons-material/Delete'
 import StartRecordingIcon from '@mui/icons-material/FiberManualRecord'
 import GestureIcon from '@mui/icons-material/Gesture'
@@ -378,6 +378,7 @@ const Home: NextPage = () => {
                   size="small"
                   color="primary"
                   value={mouseTool}
+                  className={styles.toolButtonGroup}
                   exclusive
                   onChange={(v, w) => {
                     composer.setMouseTool(w);
@@ -385,8 +386,14 @@ const Home: NextPage = () => {
                   }
                   }
                 >
-                  <ToggleButton disabled={streams.length === 0} value="move-resize"><AspectRatioIcon className={styles.toogleButtonIcon} /> Move / resize</ToggleButton>
-                  <ToggleButton disabled={streams.length === 0} value="draw"><GestureIcon className={styles.toogleButtonIcon} /> Draw</ToggleButton>
+                  <ToggleButton className={styles.toggleButton} disabled={streams.length === 0} value="move-resize">
+                    <FullscreenExitIcon className={styles.toggleButtonIcon} />
+                    Move / Resize
+                  </ToggleButton>
+                  <ToggleButton className={styles.toggleButton} disabled={streams.length === 0} value="draw">
+                    <GestureIcon className={styles.toggleButtonIcon} />
+                    Draw
+                  </ToggleButton>
                 </ToggleButtonGroup>
                 {mouseTool === "draw" && <>
                   <FormLabel component="legend">Line color</FormLabel>
@@ -422,9 +429,9 @@ const Home: NextPage = () => {
               onClick={() => setUploadSettingsDialogOpen(true)}
             ><SettingsIcon /></Button></h2>
 
-            <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on &quot;Add a stream&quot; above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
+            <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on the &quot;+&quot; icon above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
               <span>
-                <Button disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
+                <Button className={styles.record} disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
                   if (!isRecording) {
                     composer.startRecording({
                       uploadToken,
@@ -455,8 +462,8 @@ const Home: NextPage = () => {
                     setIsRecording(false);
                   }
                 }}>{!isRecording
-                  ? <><StartRecordingIcon className={styles.toogleButtonIcon} />start recording</>
-                  : <><StopRecordingIcon className={styles.toogleButtonIcon} />stop recording ({recordingDuration} sec)</>}
+                  ? <div><StartRecordingIcon className={styles.toggleButtonIcon} />Start recording</div>
+                  : <div><StopRecordingIcon className={styles.toggleButtonIcon} />Stop recording ({recordingDuration} sec)</div>}
                 </Button>
               </span>
             </Tooltip>
