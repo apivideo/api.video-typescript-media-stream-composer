@@ -19,12 +19,14 @@
   flex-direction: row;
   width: 100%;
   max-width: 1600px;
-  height: 60%;
   margin-top: auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 60px 0;
 }
 
-.columnsContainer > div {
-  margin: 1em;
+.columnsContainer > div:first-of-type {
+  height: 100%;
 }
 
 .columnsContainer fieldset {

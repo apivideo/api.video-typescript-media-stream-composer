@@ -46,8 +46,8 @@ const theme = createTheme({
   },
 });
 
-const WIDTH = 1024;
-const HEIGHT = 768;
+const WIDTH = 1600;
+const HEIGHT = 1000;
 const DEFAULT_UPLOAD_TOKEN = process.env.NEXT_PUBLIC_UPLOAD_TOKEN!;
 
 const composer = (() => {
@@ -111,6 +111,12 @@ const Home: NextPage = () => {
   const [videoStatus, setVideoStatus] = useState<"recording" | "encoding" | "playable" | undefined>();
 
   const router = useRouter()
+
+  useEffect(() => {
+    if (streams.length === 0 && document.querySelector("canvas")) {
+      document.getElementById('canvas-container')!.removeChild(document.querySelector("canvas")!)
+    }
+  }, [streams])
 
   useEffect(() => {
     (window as any).composer = composer;
@@ -197,6 +203,7 @@ const Home: NextPage = () => {
       composer.appendCanvasTo("#canvas-container");
       const canvas = composer.getCanvas();
       canvas!.style.width = "100%";
+      canvas!.style.height = "100%";
       canvas!.style.boxSizing = "unset";
       setStreams(composer.getStreams());
     }, 100);
