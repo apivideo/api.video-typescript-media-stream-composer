@@ -77,7 +77,12 @@
   font-weight: 600;
   font-size: 1rem;
 }
-  
+.settingsPaper > h2:nth-of-type(2) {
+  margin-bottom: .5rem;
+}
+.settingsPaper > h2:nth-of-type(3) {
+  margin-top: 2rem;
+}
 .settingsPaper h2 button {
   min-width: 30px;
   padding: 0;
@@ -136,4 +141,23 @@
 .videoOff {
   display: block;
   margin: 0 auto;
+}
+
+.formControl {
+  position: relative;
+}
+.formControl > img {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+}
+.audioSelect * {
+  border: none;
+}
+.audioSelect div[role=button] {
+  padding: 10px 13px;
+  padding-left: 30px;
+  border: 1px solid #A6B5CA;
 }

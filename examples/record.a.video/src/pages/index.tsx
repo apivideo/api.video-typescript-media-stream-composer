@@ -1,5 +1,6 @@
 import { MediaStreamComposer, MouseTool, StreamDetails } from '@api.video/media-stream-composer'
 import AddIcon from '@mui/icons-material/Add';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AspectRatioIcon from '@mui/icons-material/AspectRatio'
 import DeleteIcon from '@mui/icons-material/Delete'
 import StartRecordingIcon from '@mui/icons-material/FiberManualRecord'
@@ -343,13 +344,13 @@ const Home: NextPage = () => {
             }
 
             <h2>Audio source</h2>
-            <FormControl fullWidth>
-              <InputLabel id="audio-source-select-label">Audio source</InputLabel>
+            <FormControl className={styles.formControl} fullWidth>
+              <NextImage src="/mic.svg" alt="Microphone" width={16} height={16} />
               <Select
-                labelId="audio-source-select-label"
+                className={styles.audioSelect}
                 id="audio-source-select"
                 value={audioSource}
-                label="Audio source"
+                IconComponent={ExpandMoreIcon}
                 onChange={async (a) => {
                   if (audioStreamId) {
                     composer.removeAudioSource(audioStreamId);
@@ -364,7 +365,7 @@ const Home: NextPage = () => {
                   setAudioSource(selectedAudioSource);
                 }}
               >
-                <MenuItem key={"undefined"} value={"none"}>none</MenuItem>
+                <MenuItem key={"undefined"} value={"none"}>None</MenuItem>
                 {audioDevices.map(d => <MenuItem key={d.deviceId} value={d.deviceId}>{d.label}</MenuItem>)}
               </Select>
             </FormControl>
