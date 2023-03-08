@@ -25,19 +25,6 @@
   padding: 60px 0;
 }
 
-.columnsContainer > div:first-of-type {
-  height: 100%;
-}
-
-.columnsContainer fieldset {
-  width: 100%;
-}
-
-.columnsContainer > div h2:first-child {
-  margin-top: 0.8em;
-  margin-bottom: 1.4rem;
-}
-
 .table {
   margin-top: 1em;
 }
@@ -89,22 +76,25 @@
   width: 100%;
   overflow: scroll;
   border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
-
+.settingsPaper fieldset {
+  width: 100%;
+}
 .settingsPaper h2 {
   display: flex;
   align-items: center;
   gap: 5px;
   margin-top: 3rem;
-  margin-bottom: 1.3rem;
+  margin-bottom: .5rem;
   font-weight: 600;
   font-size: 1rem;
+  width: 100%;
 }
-.settingsPaper > h2:nth-of-type(2) {
-  margin-bottom: .5rem;
-}
-.settingsPaper > h2:nth-of-type(3) {
-  margin-top: 2rem;
+.settingsPaper h2:last-of-type {
+  margin-top: auto;
 }
 .settingsPaper h2 button {
   min-width: 30px;
