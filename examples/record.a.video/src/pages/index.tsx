@@ -8,10 +8,10 @@ import GestureIcon from '@mui/icons-material/Gesture'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
 import SettingsIcon from '@mui/icons-material/Settings'
-import StopRecordingIcon from '@mui/icons-material/StopCircle'
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import VisibilityOnIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { Alert, FormControl, FormGroup, FormLabel, InputLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
+import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -431,7 +431,7 @@ const Home: NextPage = () => {
 
             <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on the &quot;+&quot; icon above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
               <span>
-                <Button className={styles.record} disabled={streams.length === 0} variant="contained" fullWidth color={isRecording ? "error" : "success"} onClick={async () => {
+                <Button className={styles.record} disabled={streams.length === 0} variant="contained" fullWidth onClick={async () => {
                   if (!isRecording) {
                     composer.startRecording({
                       uploadToken,
@@ -462,8 +462,8 @@ const Home: NextPage = () => {
                     setIsRecording(false);
                   }
                 }}>{!isRecording
-                  ? <div><StartRecordingIcon className={styles.toggleButtonIcon} />Start recording</div>
-                  : <div><StopRecordingIcon className={styles.toggleButtonIcon} />Stop recording ({recordingDuration} sec)</div>}
+                  ? <div><StartRecordingIcon fontSize="large" className={styles.toggleButtonIcon} />Start recording</div>
+                  : <div><StopRoundedIcon style={{ color: '#DC3A3A' }} fontSize="large" className={styles.toggleButtonIcon} />Stop recording ({recordingDuration} sec)</div>}
                 </Button>
               </span>
             </Tooltip>
