@@ -344,7 +344,8 @@ const Home: NextPage = () => {
                               <div 
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                {...provided.dragHandleProps} className={styles.stream}
+                                {...provided.dragHandleProps}
+                                className={`${styles.stream} ${snapshot.isDragging ? styles.dragged : ''}`}
                               >
                                 <DragIndicatorRoundedIcon />
                                 <p>
