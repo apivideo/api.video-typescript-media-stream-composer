@@ -166,7 +166,22 @@ const Home: NextPage = () => {
   }, []);
 
   function onDragEnd({ destination, source }: DropResult) {
-    if (!destination) return;
+    if (!destination || source.index === destination.index) return
+    const streamId = composer.getStreams().at(source.index)?.id
+    if (!streamId) return
+    let newIndex = source.index
+    if (source.index > destination.index) {
+      do {
+        composer.moveDown(streamId)
+        newIndex--;
+      } while (newIndex !== destination.index);
+    } else {
+      do {
+        composer.moveUp(streamId)
+        newIndex++;
+      } while (newIndex !== destination.index);
+    }
+
     const newStreams = Array.from(streams);
     const [removed] = newStreams.splice(source.index, 1);
     newStreams.splice(destination.index, 0, removed);
