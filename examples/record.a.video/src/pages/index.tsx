@@ -464,11 +464,7 @@ const Home: NextPage = () => {
               </FormGroup>
             </FormControl>
 
-
-            <h2>
-              Progressive upload
-              <Button onClick={() => setUploadSettingsDialogOpen(true)}><SettingsIcon /></Button>
-            </h2>
+            <SettingsIcon color='primary' onClick={() => setUploadSettingsDialogOpen(true)} className={styles.settingsButton} />
 
             <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on the &quot;+&quot; icon above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
               <span>

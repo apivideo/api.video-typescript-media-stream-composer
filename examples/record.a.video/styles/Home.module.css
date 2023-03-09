@@ -92,7 +92,7 @@
   font-size: 1rem;
   width: 100%;
 }
-.settingsPaper h2:last-of-type {
+.settingsPaper span:last-of-type {
   padding-top: 10px;
   margin-top: auto;
 }
@@ -122,6 +122,13 @@
   max-height: 165px;
   overflow: scroll;
   padding-left: 5px;
+}
+
+.settingsButton {
+  position: absolute;
+  right: 5px;
+  top: 4px;
+  cursor: pointer;
 }
 
 .stream {
