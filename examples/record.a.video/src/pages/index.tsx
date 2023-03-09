@@ -337,7 +337,7 @@ const Home: NextPage = () => {
                 <DragDropContext onDragEnd={onDragEnd}>
                   <Droppable droppableId="streams">
                     {provided => (
-                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                      <div ref={provided.innerRef} {...provided.droppableProps} className={styles.droppable}>
                         {streams.map((stream, i) => (
                           <Draggable key={`${stream.id}_${i}`} draggableId={`${stream.id}_${i}`} index={i}>
                             {(provided, snapshot) => (

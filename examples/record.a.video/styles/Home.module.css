@@ -3,7 +3,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #EFEFF8;
   height: 100vh;
 }
 .container > p {
@@ -94,7 +93,11 @@
   width: 100%;
 }
 .settingsPaper h2:last-of-type {
+  padding-top: 10px;
   margin-top: auto;
+}
+.settingsPaper > h2:nth-of-type(2) {
+  margin-top: 2rem;
 }
 .settingsPaper h2 button {
   min-width: 30px;
@@ -113,6 +116,12 @@
   margin-top: .3rem;
   font-weight: 500;
   font-size: 12px;
+}
+
+.droppable {
+  max-height: 165px;
+  overflow: scroll;
+  padding-left: 5px;
 }
 
 .stream {
