@@ -11,6 +11,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import VisibilityOnIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
@@ -27,6 +28,7 @@ import { CirclePicker } from 'react-color'
 import styles from '../../styles/Home.module.css'
 import StreamDialog, { StreamFormValues } from '../components/StreamDialog'
 import UploadSettingsDialog, { UploadSettings } from '../components/UploadSettingsDialog'
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 const theme = createTheme({
   palette: {
@@ -165,8 +167,15 @@ const Home: NextPage = () => {
       .catch(e => console.log(e));
   }, []);
 
+  function onDragEnd({ destination, source }: DropResult) {
+    if (!destination) return;
+    const newStreams = Array.from(streams);
+    const [removed] = newStreams.splice(source.index, 1);
+    newStreams.splice(destination.index, 0, removed);
+    setStreams(newStreams);
+  };
 
-  const addStream = async (opts: StreamFormValues) => {
+  async function addStream(opts: StreamFormValues) {
     setAddStreamDialogOpen(false);
     let stream: MediaStream | HTMLImageElement;
     switch (opts.type) {
@@ -315,39 +324,29 @@ const Home: NextPage = () => {
                   <NextImage className={styles.videoOff} src="/video-off.svg" alt='No stream' width={22} height={22} />
                   <p className={styles.noStream}><AddIcon fontSize='small' color='primary' /> to add video streams</p>
                 </>
-              ) : 
-              <TableContainer className={styles.table}>
-                <Table size="small" aria-label="simple table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Streams</TableCell>
-                      <TableCell align="right"></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {streams.map((val, index, array) => array[array.length - 1 - index]).map((stream, i) => (
-                      <TableRow
-                        key={i}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                      >
-                        <TableCell component="th" scope="row">
-                          #{stream.id} ({stream.options.name} {stream.options.index})
-                        </TableCell>
-                        <TableCell className={styles.tableActions} align="right">
-                          <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
-                          <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
-                          {stream.options.hidden
-                            ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false }); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
-                            : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true }); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
-
-                          <Button onClick={() => { composer.removeStream(stream.id); setStreams(composer.getStreams()); }}><DeleteIcon></DeleteIcon></Button>
-                        </TableCell>
-
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              ) : (
+                <DragDropContext onDragEnd={onDragEnd} onDragStart={() => console.log('DRAG')}>
+                  <Droppable droppableId="streams">
+                    {provided => (
+                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                        {streams.map((stream, i) => (
+                          <Draggable key={`${stream.id}_${i}`} draggableId={`${stream.id}_${i}`} index={i}>
+                            {(provided, snapshot) => (
+                              <p ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                              >
+                                {stream.id}
+                              </p>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              )
             }
 
             <h2>Audio source</h2>
