@@ -2,17 +2,14 @@ import { MediaStreamComposer, MouseTool, StreamDetails } from '@api.video/media-
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import DeleteIcon from '@mui/icons-material/Delete'
 import StartRecordingIcon from '@mui/icons-material/FiberManualRecord'
 import GestureIcon from '@mui/icons-material/Gesture'
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
-import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
+import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 import SettingsIcon from '@mui/icons-material/Settings'
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
-import VisibilityOnIcon from '@mui/icons-material/Visibility'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
-import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -214,8 +211,14 @@ const Home: NextPage = () => {
       canvas!.style.width = "100%";
       canvas!.style.height = "100%";
       canvas!.style.boxSizing = "unset";
-      setStreams(composer.getStreams());
+      setStreams([...streams, composer.getStreams()[composer.getStreams().length - 1]]);
     }, 100);
+  }
+
+  function toggleStreamVisibility(stream: StreamDetails) {
+    if (!composer.getStream(stream.id)) return;
+    composer.updateStream(stream.id, { hidden: !composer.getStream(stream.id)!.options.hidden });
+    setStreams(streams.map(s => s.id === stream.id ? { ...s, options: { ...s.options, hidden: !s.options.hidden } } : s));
   }
 
   let stepNum = 0;
@@ -332,12 +335,20 @@ const Home: NextPage = () => {
                         {streams.map((stream, i) => (
                           <Draggable key={`${stream.id}_${i}`} draggableId={`${stream.id}_${i}`} index={i}>
                             {(provided, snapshot) => (
-                              <p ref={provided.innerRef}
+                              <div 
+                                ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                {...provided.dragHandleProps}
+                                {...provided.dragHandleProps} className={styles.stream}
                               >
-                                {stream.id}
-                              </p>
+                                <DragIndicatorRoundedIcon />
+                                <p>
+                                  {stream.id}
+                                </p>
+                                {stream.options.hidden 
+                                  ? <VisibilityOffOutlinedIcon onClick={() => toggleStreamVisibility(stream)} /> 
+                                  : <VisibilityOutlinedIcon onClick={() => toggleStreamVisibility(stream)} />
+                                }
+                              </div>
                             )}
                           </Draggable>
                         ))}
@@ -553,3 +564,39 @@ const Home: NextPage = () => {
 }
 
 export default Home
+
+
+
+
+{/* <TableContainer className={styles.table}>
+                  <Table size="small" aria-label="simple table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Streams</TableCell>
+                        <TableCell align="right"></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {streams.map((val, index, array) => array[array.length - 1 - index]).map((stream, i) => (
+                        <TableRow
+                          key={i}
+                          sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        >
+                          <TableCell component="th" scope="row">
+                            #{stream.id} ({stream.options.name} {stream.options.index})
+                          </TableCell>
+                          <TableCell className={styles.tableActions} align="right">
+                            <Button disabled={i === 0} onClick={() => { composer.moveUp(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowUpIcon /></Button>
+                            <Button disabled={i === streams.length - 1} onClick={() => { composer.moveDown(stream.id); setStreams(composer.getStreams()); }}><KeyboardDoubleArrowDownIcon /></Button>
+                            {stream.options.hidden
+                              ? <Button onClick={() => { composer.updateStream(stream.id, { hidden: false }); setStreams(composer.getStreams()); }}><VisibilityOnIcon></VisibilityOnIcon></Button>
+                              : <Button onClick={() => { composer.updateStream(stream.id, { hidden: true }); setStreams(composer.getStreams()); }}><VisibilityOffIcon></VisibilityOffIcon></Button>}
+
+                            <Button onClick={() => { composer.removeStream(stream.id); setStreams(composer.getStreams()); }}><DeleteIcon></DeleteIcon></Button>
+                          </TableCell>
+
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer> */}
