@@ -9,6 +9,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
@@ -221,6 +222,11 @@ const Home: NextPage = () => {
     setStreams(streams.map(s => s.id === stream.id ? { ...s, options: { ...s.options, hidden: !s.options.hidden } } : s));
   }
 
+  function removeStream(stream: StreamDetails) {
+    composer.removeStream(stream.id);
+    setStreams(streams.filter(s => s.id !== stream.id));
+  }
+
   let stepNum = 0;
   if (videoStatus === "encoding") {
     stepNum = 1;
@@ -328,7 +334,7 @@ const Home: NextPage = () => {
                   <p className={styles.noStream}><AddIcon fontSize='small' color='primary' /> to add video streams</p>
                 </>
               ) : (
-                <DragDropContext onDragEnd={onDragEnd} onDragStart={() => console.log('DRAG')}>
+                <DragDropContext onDragEnd={onDragEnd}>
                   <Droppable droppableId="streams">
                     {provided => (
                       <div ref={provided.innerRef} {...provided.droppableProps}>
@@ -344,6 +350,7 @@ const Home: NextPage = () => {
                                 <p>
                                   {stream.id}
                                 </p>
+                                <DeleteOutlineOutlinedIcon onClick={() => removeStream(stream)} />
                                 {stream.options.hidden 
                                   ? <VisibilityOffOutlinedIcon onClick={() => toggleStreamVisibility(stream)} /> 
                                   : <VisibilityOutlinedIcon onClick={() => toggleStreamVisibility(stream)} />

@@ -122,8 +122,19 @@
 .stream > p {
   margin: 0;
 }
+.stream > svg {
+  color: #A6B5CA;
+  transition: color 150ms ease-in-out;
+}
 .stream > svg:not(:first-of-type) {
   cursor: pointer;
+}
+.stream > svg:not(:first-of-type):hover {
+  color: #000000;
+}
+.stream > svg:nth-of-type(2) {
+  margin-left: auto;
+  margin-right: .5rem;
 }
 
 .header {
