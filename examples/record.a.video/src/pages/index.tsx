@@ -10,7 +10,7 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import { Alert, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
+import { Alert, Box, FormControl, FormGroup, FormLabel, Menu, MenuItem, Paper, Select, Snackbar, Step, StepContent, StepLabel, Stepper, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import { createTheme } from '@mui/material/styles'
 import PopupState from 'material-ui-popup-state'
@@ -259,7 +259,7 @@ const Home: NextPage = () => {
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
-        <div className={styles.columnsContainer}>
+        <div className={styles.columnsContainer} style={{ paddingBottom: videoStatus ? 150 : undefined }}>
 
           <Paper className={styles.settingsPaper} elevation={4}>
             <div className={styles.header}><NextImage src="/logo.svg" alt="api.video logo" width={65} height={15} /></div>
@@ -467,7 +467,7 @@ const Home: NextPage = () => {
             <SettingsIcon color='primary' onClick={() => setUploadSettingsDialogOpen(true)} className={styles.settingsButton} />
 
             <Tooltip style={{ fontSize: 22 }} title={<p style={{ fontSize: 16, padding: 0, margin: 0 }}>Start by adding one or more streams by clicking on the &quot;+&quot; icon above.</p>} placement='bottom' arrow disableHoverListener={streams.length > 0}>
-              <span>
+              <span className={styles.recordContainer}>
                 <Button className={styles.record} disabled={streams.length === 0} variant="contained" fullWidth onClick={async () => {
                   if (!isRecording) {
                     composer.startRecording({
@@ -504,39 +504,38 @@ const Home: NextPage = () => {
                 </Button>
               </span>
             </Tooltip>
-            {videoStatus && <>
-              <h2>Status</h2>
-
-              <Stepper activeStep={stepNum} orientation="vertical">
-
-                <Step completed={stepNum > 0}>
-                  <StepLabel style={{ fontWeight: "bold" }}>Uploading</StepLabel>
-                  <StepContent>
-                    <Typography>The video is currently being recorded and uploaded simultaneously thanks to api.video&apos;s <a target="_blank" rel="noreferrer" href="https://api.video/blog/tutorials/progressively-upload-large-video-files-without-compromising-on-speed">progressive upload</a> feature.</Typography>
-                  </StepContent>
-                </Step>
-
-                <Step completed={stepNum > 1}>
-                  <StepLabel>Encoding</StepLabel>
-                  <StepContent>
-                    <Typography>Your recording is currently being encoded in HLS for optimal streaming. It will be available soon. Please wait.</Typography>
-                  </StepContent>
-                </Step>
-
-                <Step completed={stepNum > 1}>
-                  <StepLabel>Done</StepLabel>
-                  <StepContent>
-                    <Typography>You can watch the recording <a href={playerUrl!} rel="noreferrer" target="_blank">by clicking here</a>. Higher qualities are still being processed. The viewing experience will be even better if you refresh the player in a few seconds. </Typography>
-                    <Typography style={{ marginTop: "1em" }}>Want to offer a similar experience in your application? <a href="https://dashboard.api.video/register" target="_blank" rel="noreferrer">Create your free api.video account</a> and start building with video now. No cc required.</Typography>
-                  </StepContent>
-                </Step>
-              </Stepper>
-            </>}
           </Paper>
 
-          <div id="canvas-container" className={styles.previewPaper} style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}` }}>
-            {streams.length === 0 && <><NextImage src="/video-off.svg" alt='No stream' width={48} height={48} /><p>No video stream yet</p></>}
-          </div>
+          <section className={styles.previewPaper}>
+            <div id="canvas-container" className={styles.canvasContainer} style={{ width: "100%", aspectRatio: `${WIDTH}/${HEIGHT}` }}>
+              {streams.length === 0 && <><NextImage src="/video-off.svg" alt='No stream' width={48} height={48} /><p>No video stream yet</p></>}
+            </div>
+            {videoStatus && (
+              <Box className={styles.stepperContainer}>
+                <Stepper activeStep={stepNum} connector={null} className={styles.stepper}>
+
+                  <Step completed={stepNum > 0} className={styles.step}>
+                    <StepLabel style={{ fontWeight: "bold" }}>Uploading</StepLabel>
+                      <Typography variant="caption" className={styles.stepContent}>
+                        The video is currently being recorded and uploaded simultaneously thanks to api.video&apos;s <a target="_blank" rel="noreferrer" href="https://api.video/blog/tutorials/progressively-upload-large-video-files-without-compromising-on-speed">progressive upload</a> feature.
+                      </Typography>
+                  </Step>
+
+                  <Step completed={stepNum > 1} className={styles.step}>
+                    <StepLabel>Encoding</StepLabel>
+                      <Typography variant="caption">Your recording is currently being encoded in HLS for optimal streaming. It will be available soon. Please wait.</Typography>
+                  </Step>
+
+                  <Step completed={stepNum > 1} className={styles.step}>
+                    <StepLabel>Done</StepLabel>
+                      <Typography variant="caption">
+                        You can watch the recording <a href={playerUrl!} rel="noreferrer" target="_blank">by clicking here</a>. Higher qualities are still being processed. The viewing experience will be even better if you refresh the player in a few seconds.
+                      </Typography><br />
+                  </Step>
+                </Stepper>
+              </Box>
+            )}
+          </section>
 
           <Snackbar
             open={firstStreamAddedAlertOpen}
@@ -575,6 +574,7 @@ const Home: NextPage = () => {
             onSubmit={(values) => { setUploadSettings(values); setUploadSettingsDialogOpen(false) }} />
 
         </div>
+
         <p>This Next.js application aims to show the features offered by the <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer">@api.video/media-stream-composer</a> library. </p>
         <p>The code of the application is available on GitHub here: <a target="_blank" rel="noreferrer" href="https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video">record.a.video</a>.</p>
       </ThemeProvider>
