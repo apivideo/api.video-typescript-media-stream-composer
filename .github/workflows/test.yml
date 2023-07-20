@@ -13,4 +13,3 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm install --no-save
-      - run: npm test

@@ -264,7 +264,8 @@ export class MediaStreamComposer {
     public addAudioSource(mediaStream: MediaStream): string {
         if(!this.started) this.init();
 
-        const stream = new Stream(mediaStream, "AUDIO", this.audioContext!, this.audioDelayNode!, {}, this.resolution);
+        const stream = new Stream("AUDIO", this.audioDelayNode!, this.resolution);
+        stream.load(mediaStream, this.audioContext!, {})
         this.streams.push(stream);
         return stream.getId();
     }
@@ -273,10 +274,10 @@ export class MediaStreamComposer {
         this.removeStream(id);
     }
 
-    public addStream(mediaStream: MediaStream | HTMLImageElement, userOptions: StreamUserOptions): string {
+    public async addStream(mediaStream: MediaStream | HTMLImageElement, userOptions: StreamUserOptions): Promise<string> {
         if(!this.started) this.init();
-
-        const stream = new Stream(mediaStream, "VIDEO", this.audioContext!, this.audioDelayNode!, userOptions, this.resolution);
+        const stream = new Stream( "VIDEO", this.audioDelayNode!, this.resolution);
+        await stream.load(mediaStream, this.audioContext!, userOptions)
         this.streams.push(stream);
         return stream.getId();
     }
