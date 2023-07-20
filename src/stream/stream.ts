@@ -1,5 +1,14 @@
 import { DragEvent, DragStart } from "../mouse-event-listener";
 import { Position, Resolution, StreamMask, StreamPosition, StreamPositionType } from "../stream-position";
+import {
+    Webcam,
+    Player,
+    Dom,
+    Module,
+    Effect,
+    MediaStreamCapture,
+    MediaStream as BanubaMediaStream,
+  } from "@banuba/webar";
 
 interface StreamAudio {
     audioSource?: MediaStreamAudioSourceNode
@@ -39,6 +48,11 @@ export interface StreamDetails {
     streamAudio?: StreamAudio;
 }
 
+interface BanubaEffect {
+    clientToken: string;
+    moduleUrls?: string[];
+    effectUrl?: string;
+}
 export interface StreamUserOptions {
     name?: string;
     position?: StreamPositionType;
@@ -54,6 +68,7 @@ export interface StreamUserOptions {
     hidden?: boolean;
     opacity?: number;
     onClick?: (streamId: string, event: { x: number, y: number }) => void;
+    banubaEffect?: BanubaEffect
 }
 
 export class Stream {
@@ -77,17 +92,22 @@ export class Stream {
     private containerResolution: Resolution;
     private audioDelayNode: DelayNode;
 
-    constructor(mediaStream: MediaStream | CanvasImageSource, type: StreamType, audioContext: AudioContext, audioDelayNode: DelayNode, options: StreamUserOptions, containerResolution: Resolution) {
+    constructor(type: StreamType,  audioDelayNode: DelayNode,  containerResolution: Resolution) {
         this.containerResolution = containerResolution;
         this.type = type;
         this.audioDelayNode = audioDelayNode;
         this.id = `${type.toLowerCase()}_${Stream.lastStreamId++}`;
+    }
 
-
+    public async load(mediaStream: MediaStream | CanvasImageSource, audioContext: AudioContext, options: StreamUserOptions,) {
         if (mediaStream instanceof MediaStream) {
-            this.mediaStream = mediaStream;
+            if(options.banubaEffect) {
+                this.mediaStream  = await this.createBanubaEffect(mediaStream, options.banubaEffect)
+            } else {
+                this.mediaStream = mediaStream;
+            }
 
-            this.videoElement = this.createStreamVideoElement(mediaStream);
+            this.videoElement = this.createStreamVideoElement(this.mediaStream);
             this.videoElement.onresize = (_) => this.updateDisplaySettings();
         } else {
             this.videoElement = mediaStream;
@@ -97,8 +117,27 @@ export class Stream {
         this.displaySettings = this.updateOptions(options);
 
         if (this.mediaStream && this.mediaStream.getAudioTracks().length > 0 && audioContext && !this.mute) {
-            this.streamAudio = this.createStreamAudioElement(audioContext, audioDelayNode, this.mediaStream);
+            this.streamAudio = this.createStreamAudioElement(audioContext, this.audioDelayNode, this.mediaStream);
         }
+    }
+
+    private async createBanubaEffect(stream: MediaStream, banuba: BanubaEffect) {
+        const player = await Player.create({ clientToken: banuba.clientToken });
+
+        (banuba.moduleUrls || []).forEach(async (url) => {
+            await player.addModule(new Module(url));
+        });
+        
+        player.use(new BanubaMediaStream(stream));
+
+        if(banuba.effectUrl) {
+            await player.applyEffect(new Effect(banuba.effectUrl));
+        }
+
+        stream = new MediaStreamCapture(player);
+        player.play();
+
+        return stream;
     }
 
     getId(): string {
@@ -321,6 +360,11 @@ export class Stream {
 
         const trackSettings = this.mediaStream?.getVideoTracks()[0].getSettings();
 
+        if(trackSettings && !trackSettings.width) {
+            trackSettings.width = 1024;
+            trackSettings.height = 768;
+        }
+        
         const streamResolution = trackSettings
             ? { width: trackSettings.width as number, height: trackSettings.height as number }
             : { width: this.videoElement?.width as number, height: this.videoElement?.height as number };

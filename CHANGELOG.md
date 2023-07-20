@@ -1,6 +1,9 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.2.3] - 2023-07-20
+- add effects alpha version
+  
 ## [0.2.2] - 2023-02-07
 - add `getSupportedMimeType` method
 - add `mimeType` & `generateFileOnStop` options
