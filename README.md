@@ -1,3 +1,4 @@
+<!--<documentation_excluded>-->
 [![badge](https://img.shields.io/twitter/follow/api_video?style=social)](https://twitter.com/intent/follow?screen_name=api_video) &nbsp; [![badge](https://img.shields.io/github/stars/apivideo/api.video-typescript-media-stream-composer?style=social)](https://github.com/apivideo/api.video-typescript-media-stream-composer) &nbsp; [![badge](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fcommunity.api.video)](https://community.api.video)
 ![](https://github.com/apivideo/.github/blob/main/assets/apivideo_banner.png)
 <h1 align="center">api.video media composer</h1>
@@ -8,7 +9,7 @@
 [api.video](https://api.video) is the video infrastructure for product builders. Lightning fast video APIs for integrating, scaling, and managing on-demand & low latency live streaming features in your app.
 
 
-# Table of contents
+## Table of contents
 - [Table of contents](#table-of-contents)
 - [Project description](#project-description)
 - [Getting started](#getting-started)
@@ -48,7 +49,20 @@
 - [Full examples](#full-examples)
   - ["Loom-like"](#loom-like)
 
-# Project description
+<!--</documentation_excluded>-->
+<!--<documentation_only>
+---
+title: api.video TypeScript Media Composer
+meta: 
+  description: The official api.video TypeScript Media Composer for api.video. [api.video](https://api.video/) is the video infrastructure for product builders. Lightning fast video APIs for integrating, scaling, and managing on-demand & low latency live streaming features in your app.
+---
+
+# api.video TypeScript Media Composer
+
+[api.video](https://api.video/) is the video infrastructure for product builders. Lightning fast video APIs for integrating, scaling, and managing on-demand & low latency live streaming features in your app.
+
+</documentation_only>-->
+## Project description
 
 This library lets you easily record & upload videos to api.video from a composition of several media streams. The position and size of each stream can be set in a flexible and easy way. 
 
@@ -58,11 +72,11 @@ This allows for example, with only a few lines of code, to create a video compos
 The code of a small Next.js application demonstrating the different features offered by the library is available in the [examples/record.a.video](https://github.com/apivideo/api.video-typescript-media-stream-composer/tree/main/examples/record.a.video) folder. If you want to try it live, go here: [https://record.a.video](https://record.a.video/).
 
 
-# Getting started
+## Getting started
 
-## Installation
+### Installation
 
-### Installation method #1: requirejs
+#### Installation method #1: requirejs
 
 If you use requirejs you can add the library as a dependency to your project with 
 
@@ -83,7 +97,7 @@ var composer = new MediaStreamComposer({
 }); 
 ```
 
-### Installation method #2: ES6 modules
+#### Installation method #2: ES6 modules
 
 You can add the library as a dependency to your project with 
 
@@ -105,7 +119,7 @@ const composer = new MediaStreamComposer({
 ```
 
 
-### Simple include in a javascript project
+#### Simple include in a javascript project
 
 Include the library in your HTML file like so:
 
@@ -129,20 +143,20 @@ Then you can instantiate the composer using `new MediaStreamComposer()`:
 </script>
 ```
 
-# Documentation
+## Documentation
 
-## Instantiation
+### Instantiation
 
-### Options 
+#### Options 
 
 The media stream composer is instantiated using an `options` object. At the moment, it contains only one option: `resolution`. If provided, this option must contain a `width` and a `height` property. This resolution will be used to create the canvas element that will be used to draw the streams. It will also be used to set the resolution of the video when it is uploaded.
 
 If the `resolution` option is not provided, the canvas will be created with this resolution: 1280x720.
 
-## Methods
+### Methods
 
 
-### `addStream(mediaStream: MediaStream | HTMLImageElement, options: StreamOptions): string`
+#### `addStream(mediaStream: MediaStream | HTMLImageElement, options: StreamOptions): string`
 
 The addStream() method adds a stream to the composition. A stream can be either a `MediaStream` (for example, the webcam, the screen, or a window capture) or an `HTMLImageElement` (for example, a logo).
 
@@ -152,7 +166,7 @@ It takes a `MediaStream | HTMLImageElement` and an `StreamOptions` parameter.
 
 When you load an image onto the composition, the origin of the image must be the same as the origin of the webpage in order for the image to be displayed correctly. This means that the image must be served from the same domain, or the server hosting the image must include the appropriate CORS (Cross-Origin Resource Sharing) headers to allow the image to be displayed on the canvas from a different origin. More details here: https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image .
 
-#### Options
+##### Options
 
 | Option name | Type                                                         | Default value | Description                                                                                                                                               |
 | ----------: | ------------------------------------------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -212,7 +226,7 @@ const streamId = composer.addStream(image, {
 });
 ```
 
-### `updateStream(streamId: string, options: StreamOptions): void`
+#### `updateStream(streamId: string, options: StreamOptions): void`
 
 Update the options of an existing stream. It takes the id of the stream (the one returned by the addStream() method) and an `StreamOptions` parameter (same as for the addStream() method).
 
@@ -224,7 +238,7 @@ composer.updateStream(streamId, {
 });
 ```
 
-### `removeStream(id: string): void`
+#### `removeStream(id: string): void`
 
 Remove a stream from the composition. The id is the same as the one returned by the addStream() method.
 
@@ -234,7 +248,7 @@ Remove a stream from the composition. The id is the same as the one returned by 
 composer.removeStream(streamId);
 ```
 
-### `getStreams(): StreamDetails[]`
+#### `getStreams(): StreamDetails[]`
 
 Returns an array of objects containing the details of all the streams in the composition.
 
@@ -277,7 +291,7 @@ const streams = composer.getStreams();
 
 ```
 
-### `getStream(id: string): StreamDetails`
+#### `getStream(id: string): StreamDetails`
 
 Get the details of a stream. It takes the id of the stream. The id is the same as the one returned by the addStream() method.
 
@@ -293,7 +307,7 @@ const stream = composer.getStream(streamId);
 
 
 
-### `addAudioSource(mediaStream: MediaStream): string`
+#### `addAudioSource(mediaStream: MediaStream): string`
 
 The addAudioSource() method adds a stream as an audio source to the composition. It takes a `MediaStream` parameter. The display won't be impacted by the stream. Only the audio will be mixed.
                                                                            |
@@ -308,7 +322,7 @@ navigator.mediaDevices.getDisplayMedia({ audio: { deviceId: selectedAudioSource 
 
 ```
 
-### `removeAudioSource(id: string): void`
+#### `removeAudioSource(id: string): void`
 
 Remove an audio source from the composition. The id is the same as the one returned by the addAudioSource() method.
 
@@ -318,7 +332,7 @@ Remove an audio source from the composition. The id is the same as the one retur
 composer.removeAudioSource(audioSourceId);
 ```
 
-### `getAudioSources(): AudioSourceDetails[]`
+#### `getAudioSources(): AudioSourceDetails[]`
 
 Returns an array of objects containing the details of all the streams in the composition.
 
@@ -335,7 +349,7 @@ const audioSources = composer.getAudioSources();
 
 ```
 
-### `getAudioSource(audioSourceId: string): AudioSourceDetails`
+#### `getAudioSource(audioSourceId: string): AudioSourceDetails`
 
 Get the details of an audio source. It takes the id of the audio source. The id is the same as the one returned by the addAudioSource() method.
 
@@ -347,7 +361,7 @@ const stream = composer.getAudioSource(audioSourceId);
 
 
 
-### `moveUp(streamId: string): void`
+#### `moveUp(streamId: string): void`
 
 Move a stream up in the composition (ie. move it above the stream that was above it). The id is the same as the one returned by the addStream() method.
 
@@ -357,7 +371,7 @@ Move a stream up in the composition (ie. move it above the stream that was above
 composer.moveUp(streamId);
 ```
 
-### `moveDown(streamId: string): void`
+#### `moveDown(streamId: string): void`
 
 Move a stream down in the composition (ie. move it below the stream that was below it). The id is the same as the one returned by the addStream() method.
 
@@ -367,17 +381,17 @@ Move a stream down in the composition (ie. move it below the stream that was bel
 composer.moveDown(streamId);
 ```
 
-### `startRecording(options: RecordingOptions): void`
+#### `startRecording(options: RecordingOptions): void`
 
 Start recording the composition & upload it to your api.video account. It takes an `RecordingOptions` parameter.
 
-#### Options
+##### Options
 
 Options to provide depend on the way you want to authenticate to the api.video API: either using a delegated upload token (recommanded), or using a usual access token. 
 
-##### Using a delegated upload token (recommended):
+###### Using a delegated upload token (recommended):
 
-Using delegated upload tokens for authentication is best options when uploading from the client side. To know more about delegated upload token, read the dedicated article on api.video's blog: [Delegated Uploads](https://api.video/blog/tutorials/delegated-uploads).
+Using delegated upload tokens for authentication is best options when uploading from the client side. To know more about delegated upload token, read the dedicated article on api.video's blog: [Delegated Uploads](https://api.video/blog/tutorials/delegated-uploads/).
 
 
 |                   Option name | Mandatory | Type   | Description             |
@@ -386,7 +400,7 @@ Using delegated upload tokens for authentication is best options when uploading 
 |                       videoId | no        | string | id of an existing video |
 | _common options (see bellow)_ |           |        |                         |
 
-##### Using an access token (discouraged):
+###### Using an access token (discouraged):
 
 **Warning**: be aware that exposing your access token client-side can lead to huge security issues. Use this method only if you know what you're doing :).
 
@@ -398,7 +412,7 @@ Using delegated upload tokens for authentication is best options when uploading 
 | _common options (see bellow)_ |           |        |                         |
 
 
-##### Common options
+###### Common options
 
 | Option name | Mandatory | Type   | Description                                                         |
 | ----------: | --------- | ------ | ------------------------------------------------------------------- |
@@ -416,7 +430,7 @@ composer.startRecording({
 });
 ```
 
-### `stopRecording(): Promise<VideoUploadResponse>`
+#### `stopRecording(): Promise<VideoUploadResponse>`
 
 The stopRecording() method stops the recording of the composition. It takes no parameter. It returns a Promise that resolves with the newly created video.
 
@@ -426,7 +440,7 @@ The stopRecording() method stops the recording of the composition. It takes no p
 composer.stopRecording().then(e => console.log(`player url: ${e.assets.player}`));
 ```
 
-### `getCanvas(): HTMLCanvasElement | undefined`
+#### `getCanvas(): HTMLCanvasElement | undefined`
 
 Returns the canvas used to draw the composition. It takes no parameter.
 
@@ -436,7 +450,7 @@ Returns the canvas used to draw the composition. It takes no parameter.
 const canvas = composer.getCanvas();
 ```
 
-### `appendCanvasTo(containerQuerySelector: string): void`
+#### `appendCanvasTo(containerQuerySelector: string): void`
 
 Append the canvas used to draw the composition to an HTML container. It takes a string containing the query selector of the container.
 
@@ -456,7 +470,7 @@ Additionally, it's mandatory is you want to use mouse-based features like draggi
 ```
 
 
-### `setMouseTool(tool: "draw" | "move-resize"): void`
+#### `setMouseTool(tool: "draw" | "move-resize"): void`
 
 Define the kind of action that will be performed when the user interact with the canvas using the mouse. It takes a string containing the name of the tool.
 
@@ -471,7 +485,7 @@ composer.setMouseTool("draw");
 
 ```
 
-### `setDrawingSettings(settings: Partial<DrawingSettings>): void`
+#### `setDrawingSettings(settings: Partial<DrawingSettings>): void`
 
 Set the drawing settings for the `draw` tool. It takes a `DrawingSettings` parameter that contains the following attributes:
 - `color`: the color of the drawing
@@ -488,7 +502,7 @@ composer.setDrawingSettings({
 });
 ```
 
-### `clearDrawing(): void`
+#### `clearDrawing(): void`
 
 Clear all the drawings on the canvas. It takes no parameter.
 
@@ -498,7 +512,7 @@ Clear all the drawings on the canvas. It takes no parameter.
 composer.clearDrawing();
 ```
 
-### `addEventListener(event: string, listener: Function)`
+#### `addEventListener(event: string, listener: Function)`
 
 Define an event listener for the media recorder. The following events are available:
 - `"error"`: when an error occurs
@@ -512,13 +526,13 @@ Define an event listener for the media recorder. The following events are availa
     });
 ```
 
-### `destroy()`
+#### `destroy()`
 
 Destroys all streams and releases all resources in use.
 
-# Full examples 
+## Full examples 
 
-## "Loom-like"
+### "Loom-like"
 
 This samples shows how to use the composer to create a screencast with a webcam stream in the corner.
 
