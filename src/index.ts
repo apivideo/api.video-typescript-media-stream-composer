@@ -46,7 +46,9 @@ declare global {
 
 export type MouseTool = "draw" | "move-resize";
 
-type RecordingOptions =  RecorderOptions & (ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken);
+type RecordingOptions =  RecorderOptions & (ProgressiveUploaderOptionsWithUploadToken | ProgressiveUploaderOptionsWithAccessToken) & {timeslice?: number};
+
+const DEFAULT_TIMESLICE = 5000;
 
 export class MediaStreamComposer {
     private result: MediaStream | null = null;
@@ -170,7 +172,9 @@ export class MediaStreamComposer {
 
     public startRecording(options: RecordingOptions) {
         if(!this.started) this.init();
-
+        
+        this._updateAudioDelay(Math.min(5000, options.timeslice || DEFAULT_TIMESLICE)); 
+        
         this.recorder = new ApiVideoMediaRecorder(this.result!, {
             ...options,
             origin: {
@@ -187,7 +191,7 @@ export class MediaStreamComposer {
             this.recorder?.addEventListener(event, (e) => this.eventTarget.dispatchEvent(Object.assign(new Event(event), { data: (e as any).data })));
         });
         
-        this.recorder.start();
+        this.recorder.start({ timeslice: options.timeslice || DEFAULT_TIMESLICE });
     }
 
     public destroy() {
