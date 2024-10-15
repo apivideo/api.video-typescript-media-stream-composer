@@ -1,6 +1,9 @@
 # Changelog
 All changes to this project will be documented in this file.
 
+## [0.2.6] - 2024-10-15
+- Fix audio delay issue
+  
 ## [0.2.5] - 2024-09-24
 - Fix parallel calls to uploadLastPart
   
