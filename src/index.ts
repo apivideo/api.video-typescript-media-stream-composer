@@ -173,7 +173,6 @@ export class MediaStreamComposer {
     public startRecording(options: RecordingOptions) {
         if(!this.started) this.init();
         
-        this._updateAudioDelay(Math.min(5000, options.timeslice || DEFAULT_TIMESLICE)); 
         
         this.recorder = new ApiVideoMediaRecorder(this.result!, {
             ...options,
